@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>RecoverAI Dashboard</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- HEADER -->
+
+    <header class="topbar">
+
+        <div>
+            <h1>RecoverAI</h1>
+            <p>AI-Powered Revenue Recovery</p>
+        </div>
+
+        <div class="system-status">
+            <span class="status-dot"></span>
+            System Online
+        </div>
+
+    </header>
+
+
+    <main class="container">
+
+        <!-- BUSINESS METRICS -->
+
+        <section class="metrics">
+
+            <div class="metric-card">
+                <span>Revenue at Risk</span>
+                <h2 id="revenue-at-risk">₹0</h2>
+                <small>Failed payment value</small>
+            </div>
+
+            <div class="metric-card">
+                <span>Expected Recoverable</span>
+                <h2 id="expected-revenue">₹0</h2>
+                <small>Risk-adjusted estimate</small>
+            </div>
+
+            <div class="metric-card">
+                <span>Simulated Recovered</span>
+                <h2 id="recovered-revenue">₹0</h2>
+                <small>Demo recovery result</small>
+            </div>
+
+            <div class="metric-card">
+                <span>Recovery Rate</span>
+                <h2 id="recovery-rate">0%</h2>
+                <small>Revenue recovered</small>
+            </div>
+
+        </section>
+
+
+        <!-- FAILED PAYMENTS -->
+
+        <section class="panel">
+
+            <div class="panel-heading">
+
+                <div>
+                    <h2>Failed Payments</h2>
+
+                    <p>
+                        <span id="failed-count">0</span>
+                        transactions require attention
+                    </p>
+                </div>
+
+            </div>
+
+
+            <div class="table-container">
+
+                <table>
+
+                    <thead>
+                        <tr>
+                            <th>Payment</th>
+                            <th>Amount</th>
+                            <th>Failure Reason</th>
+                            <th>Attempts</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="payments-table">
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+
+        <!-- AI DECISION -->
+
+        <section class="panel decision-panel">
+
+            <div class="panel-heading">
+
+                <div>
+                    <h2>RecoverAI Decision</h2>
+                    <p>AI-assisted payment recovery analysis</p>
+                </div>
+
+                <span class="ai-badge">
+                    Gemini AI
+                </span>
+
+            </div>
+
+
+            <div id="decision-box" class="empty-decision">
+
+                Select a failed payment above and click
+                <strong>Analyze</strong> to view RecoverAI's decision.
+
+            </div>
+
+        </section>
+    <!-- RECOVERY ACTIVITY -->
+
+<section class="panel">
+
+    <div class="panel-heading">
+        <div>
+            <h2>Recovery Activity</h2>
+            <p>Recent RecoverAI analysis and decisions</p>
+        </div>
+
+        <button onclick="loadAuditHistory()">
+            Refresh
+        </button>
+    </div>
+
+    <div class="table-container">
+
+        <table>
+
+            <thead>
+                <tr>
+                    <th>Payment</th>
+                    <th>Amount</th>
+                    <th>Risk</th>
+                    <th>AI Recommendation</th>
+                    <th>Confidence</th>
+                    <th>Guardrail</th>
+                    <th>Mode</th>
+                </tr>
+            </thead>
+
+            <tbody id="audit-table">
+
+                <tr>
+                    <td colspan="7">
+                        No recovery activity yet.
+                    </td>
+                </tr>
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</section>
+    </main>
+
+
+    <script src="app.js"></script>
+
+</body>
+
+</html>

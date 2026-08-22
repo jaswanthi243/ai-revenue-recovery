@@ -1,0 +1,12 @@
+payment_id,customer_id,amount,currency,status,failure_reason,attempt_count
+PAY001,CUST001,2500,INR,failed,insufficient_funds,1
+PAY002,CUST002,1200,INR,failed,network_error,1
+PAY003,CUST003,5000,INR,captured,,1
+PAY004,CUST004,3500,INR,failed,card_expired,1
+PAY005,CUST005,800,INR,failed,insufficient_funds,2
+PAY006,CUST006,1500,INR,captured,,1
+PAY007,CUST007,7500,INR,failed,bank_declined,1
+PAY008,CUST008,2200,INR,failed,network_error,2
+PAY009,CUST009,900,INR,captured,,1
+PAY010,CUST010,4500,INR,failed,card_expired,1
+PAY011,CUST011,3000,INR,failed,network_error,3
