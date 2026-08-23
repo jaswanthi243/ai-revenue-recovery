@@ -1,13 +1,18 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from services.action_executor import execute_recovery_action
+
 import pandas as pd
 import os
 
 from datetime import datetime
 
 from services.recovery_agent import analyze_payment
+from services.action_executor import execute_recovery_action
+from services.action_history import (
+    get_action_history,
+    get_action_summary
+)
 
 
 # ==========================================
@@ -45,7 +50,7 @@ app = FastAPI(
         "recovery system"
     ),
 
-    version="2.0.0"
+    version="2.1.0"
 )
 
 
@@ -63,12 +68,12 @@ app.add_middleware(
 
     allow_methods=["*"],
 
-    allow_headers=["*"],
+    allow_headers=["*"]
 )
 
 
 # ==========================================
-# PAYMENT REQUEST MODEL
+# REQUEST MODELS
 # ==========================================
 
 class PaymentRequest(BaseModel):
@@ -83,12 +88,18 @@ class PaymentRequest(BaseModel):
 
     customer_id: str | None = None
 
+
 class ExecuteActionRequest(BaseModel):
 
     payment_id: str
+
     amount: float
+
     final_action: str
+
     guardrail_decision: str
+
+
 # ==========================================
 # LOAD PAYMENT DATA
 # ==========================================
@@ -110,6 +121,7 @@ def find_customer_id(
 
     payments = load_payments()
 
+
     match = payments[
         payments["payment_id"]
         == payment_id
@@ -122,7 +134,9 @@ def find_customer_id(
 
 
     return str(
-        match.iloc[0]["customer_id"]
+        match.iloc[0][
+            "customer_id"
+        ]
     )
 
 
@@ -142,7 +156,7 @@ def home():
             "RecoverAI",
 
         "version":
-            "2.0.0",
+            "2.1.0",
 
         "message":
             "RecoverAI API is running"
@@ -177,6 +191,7 @@ def get_payments():
 
     payments = payments.fillna("")
 
+
     return payments.to_dict(
         orient="records"
     )
@@ -193,7 +208,8 @@ def get_failed_payments():
 
 
     failed = payments[
-        payments["status"] == "failed"
+        payments["status"]
+        == "failed"
     ]
 
 
@@ -277,8 +293,7 @@ def recovery_summary():
 
 
     # ======================================
-    # ANALYZE EVERY FAILED PAYMENT USING
-    # THE NEW RECOVERAI AGENT
+    # ANALYZE FAILED PAYMENTS
     # ======================================
 
     for _, payment in (
@@ -320,7 +335,7 @@ def recovery_summary():
 
 
         # ==================================
-        # EXPECTED REVENUE
+        # EXPECTED RECOVERY
         # ==================================
 
         total_expected_revenue += (
@@ -351,7 +366,9 @@ def recovery_summary():
         ):
 
             actual_recovered_revenue += (
-                payment["amount"]
+                payment[
+                    "amount"
+                ]
             )
 
 
@@ -457,7 +474,7 @@ def analyze_payment_endpoint(
 ):
 
     # ======================================
-    # GET CUSTOMER ID
+    # CUSTOMER ID
     # ======================================
 
     customer_id = (
@@ -785,6 +802,8 @@ def analyze_payment_endpoint(
                 "final_action"
             ]
     }
+
+
 # ==========================================
 # EXECUTE RECOVERY ACTION
 # ==========================================
@@ -809,7 +828,37 @@ def execute_action(
             request.guardrail_decision
     )
 
+
     return result
+
+
+# ==========================================
+# ACTION HISTORY
+# ==========================================
+
+@app.get("/action-history")
+def action_history_endpoint():
+
+    history = get_action_history()
+
+
+    # newest first
+    return list(
+        reversed(
+            history
+        )
+    )
+
+
+# ==========================================
+# ACTION SUMMARY
+# ==========================================
+
+@app.get("/action-summary")
+def action_summary_endpoint():
+
+    return get_action_summary()
+
 
 # ==========================================
 # AUDIT HISTORY
@@ -843,5 +892,3 @@ def get_audit_history():
     except pd.errors.EmptyDataError:
 
         return []
-
-    # Trigger Render backend deployment for execute-action
