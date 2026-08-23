@@ -1,0 +1,2 @@
+payment_id,amount,action,execution_status,message,simulated,timestamp
+PAY001,2500.0,retry_later,SCHEDULED,A future payment retry has been simulated.,True,2026-08-23T21:54:50

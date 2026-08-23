@@ -8,7 +8,11 @@ import os
 from datetime import datetime
 
 from services.recovery_agent import analyze_payment
-from services.action_executor import execute_recovery_action
+
+from services.action_executor import (
+    execute_recovery_action
+)
+
 from services.action_history import (
     get_action_history,
     get_action_summary
@@ -50,7 +54,7 @@ app = FastAPI(
         "recovery system"
     ),
 
-    version="2.1.0"
+    version="2.2.0"
 )
 
 
@@ -106,6 +110,21 @@ class ExecuteActionRequest(BaseModel):
 
 def load_payments():
 
+    if not os.path.exists(
+        PAYMENTS_FILE
+    ):
+
+        raise HTTPException(
+
+            status_code=500,
+
+            detail=(
+                "Payment data file "
+                "could not be found."
+            )
+        )
+
+
     return pd.read_csv(
         PAYMENTS_FILE
     )
@@ -123,8 +142,10 @@ def find_customer_id(
 
 
     match = payments[
+
         payments["payment_id"]
         == payment_id
+
     ]
 
 
@@ -134,6 +155,7 @@ def find_customer_id(
 
 
     return str(
+
         match.iloc[0][
             "customer_id"
         ]
@@ -156,7 +178,7 @@ def home():
             "RecoverAI",
 
         "version":
-            "2.1.0",
+            "2.2.0",
 
         "message":
             "RecoverAI API is running"
@@ -164,7 +186,7 @@ def home():
 
 
 # ==========================================
-# HEALTH CHECK
+# HEALTH
 # ==========================================
 
 @app.get("/health")
@@ -176,7 +198,10 @@ def health_check():
             "healthy",
 
         "service":
-            "RecoverAI"
+            "RecoverAI",
+
+        "version":
+            "2.2.0"
     }
 
 
@@ -187,9 +212,14 @@ def health_check():
 @app.get("/payments")
 def get_payments():
 
-    payments = load_payments()
+    payments = (
+        load_payments()
+    )
 
-    payments = payments.fillna("")
+
+    payments = (
+        payments.fillna("")
+    )
 
 
     return payments.to_dict(
@@ -204,16 +234,22 @@ def get_payments():
 @app.get("/failed-payments")
 def get_failed_payments():
 
-    payments = load_payments()
+    payments = (
+        load_payments()
+    )
 
 
     failed = payments[
+
         payments["status"]
         == "failed"
+
     ]
 
 
-    failed = failed.fillna("")
+    failed = (
+        failed.fillna("")
+    )
 
 
     return failed.to_dict(
@@ -232,12 +268,16 @@ def get_payment(
     payment_id: str
 ):
 
-    payments = load_payments()
+    payments = (
+        load_payments()
+    )
 
 
     payment = payments[
+
         payments["payment_id"]
         == payment_id
+
     ]
 
 
@@ -252,6 +292,7 @@ def get_payment(
 
 
     result = (
+
         payment
         .iloc[0]
         .fillna("")
@@ -269,17 +310,24 @@ def get_payment(
 @app.get("/recovery-summary")
 def recovery_summary():
 
-    payments = load_payments()
+    payments = (
+        load_payments()
+    )
 
 
     failed = payments[
+
         payments["status"]
         == "failed"
+
     ]
 
 
     revenue_at_risk = float(
-        failed["amount"].sum()
+
+        failed[
+            "amount"
+        ].sum()
     )
 
 
@@ -334,11 +382,8 @@ def recovery_summary():
         )
 
 
-        # ==================================
-        # EXPECTED RECOVERY
-        # ==================================
-
         total_expected_revenue += (
+
             result[
                 "expected_revenue"
             ]
@@ -346,7 +391,7 @@ def recovery_summary():
 
 
         # ==================================
-        # SIMULATED RECOVERY
+        # DEMO RECOVERED VALUE
         # ==================================
 
         if (
@@ -366,6 +411,7 @@ def recovery_summary():
         ):
 
             actual_recovered_revenue += (
+
                 payment[
                     "amount"
                 ]
@@ -423,10 +469,6 @@ def recovery_summary():
         recovery_rate = 0
 
 
-    # ======================================
-    # RESPONSE
-    # ======================================
-
     return {
 
         "failed_payments":
@@ -465,7 +507,7 @@ def recovery_summary():
 
 
 # ==========================================
-# ANALYZE SINGLE PAYMENT
+# ANALYZE PAYMENT
 # ==========================================
 
 @app.post("/analyze-payment")
@@ -474,7 +516,7 @@ def analyze_payment_endpoint(
 ):
 
     # ======================================
-    # CUSTOMER ID
+    # FIND CUSTOMER
     # ======================================
 
     customer_id = (
@@ -499,13 +541,13 @@ def analyze_payment_endpoint(
 
             detail=(
                 "Customer ID could not "
-                "be found for payment"
+                "be found for payment."
             )
         )
 
 
     # ======================================
-    # RUN COMPLETE RECOVERAI AGENT
+    # RECOVERAI ANALYSIS
     # ======================================
 
     result = analyze_payment(
@@ -531,7 +573,7 @@ def analyze_payment_endpoint(
 
 
     # ======================================
-    # AI CONFIDENCE
+    # CONFIDENCE
     # ======================================
 
     ai_confidence = (
@@ -644,7 +686,7 @@ def analyze_payment_endpoint(
 
 
     # ======================================
-    # SAVE AUDIT RECORD
+    # SAVE AUDIT LOG
     # ======================================
 
     audit_df = pd.DataFrame(
@@ -652,32 +694,21 @@ def analyze_payment_endpoint(
     )
 
 
-    if (
+    file_exists = (
 
-        not os.path.exists(
+        os.path.exists(
             AUDIT_FILE
         )
 
-        or
+        and
 
         os.path.getsize(
             AUDIT_FILE
-        ) == 0
+        ) > 0
+    )
 
-    ):
 
-        audit_df.to_csv(
-
-            AUDIT_FILE,
-
-            mode="w",
-
-            header=True,
-
-            index=False
-        )
-
-    else:
+    if file_exists:
 
         audit_df.to_csv(
 
@@ -690,15 +721,22 @@ def analyze_payment_endpoint(
             index=False
         )
 
+    else:
 
-    print(
-        "Audit record saved to:",
-        AUDIT_FILE
-    )
+        audit_df.to_csv(
+
+            AUDIT_FILE,
+
+            mode="w",
+
+            header=True,
+
+            index=False
+        )
 
 
     # ======================================
-    # API RESPONSE
+    # RESPONSE
     # ======================================
 
     return {
@@ -813,19 +851,21 @@ def execute_action(
     request: ExecuteActionRequest
 ):
 
-    result = execute_recovery_action(
+    result = (
+        execute_recovery_action(
 
-        payment_id=
-            request.payment_id,
+            payment_id=
+                request.payment_id,
 
-        amount=
-            request.amount,
+            amount=
+                request.amount,
 
-        final_action=
-            request.final_action,
+            final_action=
+                request.final_action,
 
-        guardrail_decision=
-            request.guardrail_decision
+            guardrail_decision=
+                request.guardrail_decision
+        )
     )
 
 
@@ -839,10 +879,13 @@ def execute_action(
 @app.get("/action-history")
 def action_history_endpoint():
 
-    history = get_action_history()
+    history = (
+        get_action_history()
+    )
 
 
-    # newest first
+    # Newest first
+
     return list(
         reversed(
             history
@@ -857,7 +900,9 @@ def action_history_endpoint():
 @app.get("/action-summary")
 def action_summary_endpoint():
 
-    return get_action_summary()
+    return (
+        get_action_summary()
+    )
 
 
 # ==========================================
@@ -874,6 +919,13 @@ def get_audit_history():
         return []
 
 
+    if os.path.getsize(
+        AUDIT_FILE
+    ) == 0:
+
+        return []
+
+
     try:
 
         audit = pd.read_csv(
@@ -881,7 +933,9 @@ def get_audit_history():
         )
 
 
-        audit = audit.fillna("")
+        audit = (
+            audit.fillna("")
+        )
 
 
         return audit.to_dict(
@@ -889,6 +943,13 @@ def get_audit_history():
         )
 
 
-    except pd.errors.EmptyDataError:
+    except (
+        pd.errors.EmptyDataError
+    ):
 
         return []
+
+
+# ==========================================
+# ACTION CENTER PERSISTENCE ENABLED
+# ==========================================
