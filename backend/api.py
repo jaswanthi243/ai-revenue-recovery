@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-
+from services.action_executor import execute_recovery_action
 import pandas as pd
 import os
 
@@ -83,7 +83,12 @@ class PaymentRequest(BaseModel):
 
     customer_id: str | None = None
 
+class ExecuteActionRequest(BaseModel):
 
+    payment_id: str
+    amount: float
+    final_action: str
+    guardrail_decision: str
 # ==========================================
 # LOAD PAYMENT DATA
 # ==========================================
@@ -780,7 +785,31 @@ def analyze_payment_endpoint(
                 "final_action"
             ]
     }
+# ==========================================
+# EXECUTE RECOVERY ACTION
+# ==========================================
 
+@app.post("/execute-action")
+def execute_action(
+    request: ExecuteActionRequest
+):
+
+    result = execute_recovery_action(
+
+        payment_id=
+            request.payment_id,
+
+        amount=
+            request.amount,
+
+        final_action=
+            request.final_action,
+
+        guardrail_decision=
+            request.guardrail_decision
+    )
+
+    return result
 
 # ==========================================
 # AUDIT HISTORY
