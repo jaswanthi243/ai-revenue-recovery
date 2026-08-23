@@ -1,135 +1,233 @@
-from services.llm_client import get_ai_recommendation
-
-
 # ==========================================
-# RECOVERAI - LOCAL FALLBACK AGENT
+# RECOVERAI - RECOVERY AGENT
 # ==========================================
 
-def local_recommendation(failure_reason):
+from services.customer_profile import (
+    get_customer_profile,
+    calculate_reliability_score
+)
+
+from services.risk_engine import (
+    get_priority,
+    get_recovery_probability,
+    calculate_expected_revenue,
+    calculate_recovery_score,
+    get_risk_level
+)
+
+from services.guardrails import apply_guardrails
+
+
+def analyze_payment(
+    payment_id,
+    customer_id,
+    amount,
+    failure_reason,
+    attempt_count,
+    payment_status="failed"
+):
+
+    # ======================================
+    # 1. CUSTOMER PROFILE
+    # ======================================
+
+    customer = get_customer_profile(customer_id)
+
+    customer_reliability = calculate_reliability_score(
+        customer
+    )
+
+    # ======================================
+    # 2. RISK ANALYSIS
+    # ======================================
+
+    priority = get_priority(
+        amount,
+        attempt_count
+    )
+
+    recovery_probability = get_recovery_probability(
+        failure_reason,
+        attempt_count
+    )
+
+    expected_revenue = calculate_expected_revenue(
+        amount,
+        recovery_probability
+    )
+
+    # ======================================
+    # 3. RECOVERY SCORE
+    # ======================================
+
+    recovery_score = calculate_recovery_score(
+        recovery_probability,
+        customer_reliability,
+        attempt_count,
+        amount
+    )
+
+    risk_level = get_risk_level(
+        recovery_score
+    )
+
+    # ======================================
+    # 4. AI RECOMMENDATION
+    # ======================================
 
     if failure_reason == "insufficient_funds":
 
-        reasoning = (
-            "The payment failed because the customer may not "
-            "have sufficient balance. A delayed retry is appropriate."
-        )
-
         recommendation = "retry_later"
+
+        reasoning = (
+            "The payment failed because the customer "
+            "may have insufficient funds. A delayed retry "
+            "is more appropriate than an immediate retry."
+        )
 
     elif failure_reason == "card_expired":
 
-        reasoning = (
-            "The customer's payment method may be expired. "
-            "Retrying the same payment method is unlikely to succeed "
-            "until the payment method is updated."
-        )
-
         recommendation = "update_payment_method"
+
+        reasoning = (
+            "The customer's payment method appears to be "
+            "expired. Updating the payment method is more "
+            "appropriate than retrying the same method."
+        )
 
     elif failure_reason == "network_error":
 
-        reasoning = (
-            "The payment may have failed because of a temporary "
-            "network or technical issue. A retry can be attempted."
-        )
-
         recommendation = "retry_payment"
+
+        reasoning = (
+            "The payment may have failed because of a "
+            "temporary network or technical problem. "
+            "A retry is appropriate."
+        )
 
     elif failure_reason == "bank_declined":
 
-        reasoning = (
-            "The bank declined the payment. Using another payment "
-            "method or human review may be more appropriate."
-        )
-
         recommendation = "alternate_payment_method"
 
+        reasoning = (
+            "The bank declined the payment. Using another "
+            "payment method is more appropriate than "
+            "repeatedly retrying the same payment."
+        )
+
     else:
+
+        recommendation = "human_review"
 
         reasoning = (
             "The failure reason is unknown. "
             "Human review is recommended."
         )
 
-        recommendation = "human_review"
+    # ======================================
+    # 5. APPLY GUARDRAILS
+    # ======================================
+
+    guardrail_decision, guardrail_reason = apply_guardrails(
+
+        amount=amount,
+
+        attempt_count=attempt_count,
+
+        probability=recovery_probability,
+
+        recovery_score=recovery_score,
+
+        recommendation=recommendation,
+
+        payment_status=payment_status
+    )
+
+    # ======================================
+    # 6. FINAL ACTION
+    # ======================================
+
+    if guardrail_decision == "PROCEED":
+
+        final_action = recommendation
+
+    elif guardrail_decision == "HUMAN_REVIEW":
+
+        final_action = "human_review"
+
+    else:
+
+        final_action = "stop_recovery"
+
+    # ======================================
+    # 7. RETURN COMPLETE DECISION
+    # ======================================
 
     return {
+
+        "payment_id": payment_id,
+
+        "customer_id": customer_id,
+
+        "amount": amount,
+
+        "failure_reason": failure_reason,
+
+        "attempt_count": attempt_count,
+
+        "priority": priority,
+
+        "customer_reliability": customer_reliability,
+
+        "recovery_probability": recovery_probability,
+
+        "recovery_score": recovery_score,
+
+        "risk_level": risk_level,
+
+        "expected_revenue": round(
+            expected_revenue,
+            2
+        ),
+
         "reasoning": reasoning,
+
         "recommendation": recommendation,
-        "confidence": None
+
+        "guardrail_decision": guardrail_decision,
+
+        "guardrail_reason": guardrail_reason,
+
+        "final_action": final_action
     }
 
 
 # ==========================================
-# RECOVERAI AGENT
+# TEST
 # ==========================================
 
-def analyze_payment(
-    payment_id,
-    amount,
-    failure_reason,
-    attempt_count,
-    priority,
-    probability
-):
+if __name__ == "__main__":
 
-    # --------------------------------------
-    # TRY REAL AI
-    # --------------------------------------
+    result = analyze_payment(
 
-    try:
+        payment_id="PAY004",
 
-        ai_result = get_ai_recommendation(
-            payment_id,
-            amount,
-            failure_reason,
-            attempt_count,
-            priority,
-            probability
-        )
+        customer_id="CUST004",
 
-        return {
-            "payment_id": payment_id,
-            "amount": amount,
-            "priority": priority,
-            "recovery_probability": probability,
+        amount=3500,
 
-            "reasoning": ai_result["reasoning"],
-            "recommendation": ai_result["recommendation"],
-            "confidence": ai_result.get("confidence"),
+        failure_reason="card_expired",
 
-            "agent_mode": "LLM"
-        }
+        attempt_count=1,
 
-    # --------------------------------------
-    # FALLBACK IF AI API FAILS
-    # --------------------------------------
+        payment_status="failed"
+    )
 
-    except Exception as error:
+    print("\n")
+    print("=" * 60)
+    print("RECOVERAI AGENT + GUARDRAIL TEST")
+    print("=" * 60)
 
-        print(
-            "\n[RecoverAI] LLM unavailable."
-            " Switching to local fallback."
-        )
+    for key, value in result.items():
 
-        print(
-            "[RecoverAI] Reason:",
-            type(error).__name__
-        )
-
-        fallback = local_recommendation(
-            failure_reason
-        )
-
-        return {
-            "payment_id": payment_id,
-            "amount": amount,
-            "priority": priority,
-            "recovery_probability": probability,
-
-            "reasoning": fallback["reasoning"],
-            "recommendation": fallback["recommendation"],
-            "confidence": fallback["confidence"],
-
-            "agent_mode": "LOCAL_FALLBACK"
-        }
+        print(f"{key}: {value}")

@@ -1,12 +1,10 @@
 import pandas as pd
 
 from services.recovery_agent import analyze_payment
-from services.risk_engine import (
-    get_priority,
-    get_recovery_probability,
-    calculate_expected_revenue
+from services.recovery_queue import (
+    build_recovery_queue,
+    display_queue
 )
-from services.guardrails import apply_guardrails
 
 
 # ==========================================
@@ -15,7 +13,7 @@ from services.guardrails import apply_guardrails
 
 payments = pd.read_csv("data/payments.csv")
 
-print("All Payments:")
+print("\nAll Payments:")
 print(payments)
 
 
@@ -23,7 +21,9 @@ print(payments)
 # 2. FIND FAILED PAYMENTS
 # ==========================================
 
-failed_payments = payments[payments["status"] == "failed"]
+failed_payments = payments[
+    payments["status"] == "failed"
+]
 
 print("\nFailed Payments:")
 print(failed_payments)
@@ -40,176 +40,191 @@ print("INR", revenue_at_risk)
 
 
 # ==========================================
-# 4. RECOVERY ACTION
+# 4. ANALYZE FAILED PAYMENTS
 # ==========================================
 
-def get_recovery_action(failure_reason):
+print("\n")
+print("=" * 100)
+print("RECOVERAI AGENT DECISIONS")
+print("=" * 100)
 
-    if failure_reason == "insufficient_funds":
-        return "Retry payment later"
-
-    elif failure_reason == "card_expired":
-        return "Ask customer to update payment method"
-
-    elif failure_reason == "network_error":
-        return "Retry payment"
-
-    elif failure_reason == "bank_declined":
-        return "Ask customer to use another payment method"
-
-    else:
-        return "Escalate to human"
-
-
-# ==========================================
-# 5. SIMULATE RECOVERY
-# ==========================================
-
-def simulate_recovery(decision, probability):
-
-    if decision != "PROCEED":
-        return False
-
-    if probability >= 70:
-        return True
-
-    return False
-
-
-# ==========================================
-# 6. ANALYZE PAYMENTS
-# ==========================================
-
-print("\nRecovery Agent Decisions:")
-print("=" * 80)
 
 total_expected_revenue = 0
-actual_recovered_revenue = 0
 
 audit_logs = []
 
 
 for index, payment in failed_payments.iterrows():
 
+    # --------------------------------------
+    # PAYMENT INFORMATION
+    # --------------------------------------
+
     payment_id = payment["payment_id"]
+
+    customer_id = payment["customer_id"]
+
     amount = payment["amount"]
+
     failure_reason = payment["failure_reason"]
+
     attempt_count = payment["attempt_count"]
 
-    # --------------------------------------
-    # Recovery action
-    # --------------------------------------
+    payment_status = payment["status"]
 
-    action = get_recovery_action(failure_reason)
-
-    # --------------------------------------
-    # Risk engine
-    # --------------------------------------
-
-    priority = get_priority(
-        amount,
-        attempt_count
-    )
-
-    probability = get_recovery_probability(
-        failure_reason,
-        attempt_count
-    )
-
-    expected_revenue = calculate_expected_revenue(
-        amount,
-        probability
-    )
-
-    total_expected_revenue += expected_revenue
 
     # ======================================
     # RECOVERAI AGENT
     # ======================================
 
-    agent_result = analyze_payment(
-        payment_id,
-        amount,
-        failure_reason,
-        attempt_count,
-        priority,
-        probability
+    result = analyze_payment(
+
+        payment_id=payment_id,
+
+        customer_id=customer_id,
+
+        amount=amount,
+
+        failure_reason=failure_reason,
+
+        attempt_count=attempt_count,
+
+        payment_status=payment_status
     )
 
-    ai_reasoning = agent_result["reasoning"]
-    ai_recommendation = agent_result["recommendation"]
-    ai_confidence = agent_result["confidence"]
-    agent_mode = agent_result["agent_mode"]
 
     # ======================================
-    # GUARDRAILS
+    # GET AGENT RESULTS
     # ======================================
 
-    decision, guardrail_reason = apply_guardrails(
-        amount,
-        attempt_count,
-        probability
-    )
+    priority = result["priority"]
 
-    # --------------------------------------
-    # Final action
-    # --------------------------------------
+    customer_reliability = result[
+        "customer_reliability"
+    ]
 
-    if decision == "PROCEED":
-        final_action = action
+    recovery_probability = result[
+        "recovery_probability"
+    ]
 
-    elif decision == "HUMAN_REVIEW":
-        final_action = "Escalate to human"
+    recovery_score = result[
+        "recovery_score"
+    ]
 
-    else:
-        final_action = "Stop recovery"
+    risk_level = result[
+        "risk_level"
+    ]
 
-    # --------------------------------------
-    # Simulate recovery
-    # --------------------------------------
+    expected_revenue = result[
+        "expected_revenue"
+    ]
 
-    recovered = simulate_recovery(
-        decision,
-        probability
-    )
+    reasoning = result[
+        "reasoning"
+    ]
 
-    if recovered:
+    recommendation = result[
+        "recommendation"
+    ]
 
-        actual_recovered_revenue += amount
-        recovery_status = "RECOVERED"
+    guardrail_decision = result[
+        "guardrail_decision"
+    ]
 
-    else:
+    guardrail_reason = result[
+        "guardrail_reason"
+    ]
 
-        recovery_status = "NOT RECOVERED"
+    final_action = result[
+        "final_action"
+    ]
+
 
     # ======================================
-    # DISPLAY
+    # EXPECTED REVENUE
     # ======================================
 
-    print("\nPayment ID:", payment_id)
+    total_expected_revenue += expected_revenue
+
+
+    # ======================================
+    # DISPLAY AGENT DECISION
+    # ======================================
+
+    print("\n")
+    print("-" * 100)
+
+    print("Payment ID:", payment_id)
+
+    print("Customer ID:", customer_id)
+
     print("Amount: INR", amount)
+
     print("Failure:", failure_reason)
+
     print("Attempt Count:", attempt_count)
 
-    print("Priority:", priority)
-    print("Recovery Probability:", probability, "%")
+    print()
 
-    print("Agent Mode:", agent_mode)
-    print("AI Recommendation:", ai_recommendation)
-    print("AI Confidence:", ai_confidence)
-    print("AI Reasoning:", ai_reasoning)  
-    
+    print("Priority:", priority)
+
+    print(
+        "Customer Reliability:",
+        customer_reliability,
+        "/100"
+    )
+
+    print(
+        "Recovery Probability:",
+        recovery_probability,
+        "%"
+    )
+
+    print(
+        "Recovery Score:",
+        recovery_score,
+        "/100"
+    )
+
+    print(
+        "Risk Level:",
+        risk_level
+    )
 
     print(
         "Expected Recovery: INR",
         round(expected_revenue, 2)
     )
 
-    print("Guardrail Decision:", decision)
-    print("Guardrail Reason:", guardrail_reason)
+    print()
 
-    print("Final Action:", final_action)
-    print("Recovery Result:", recovery_status)
+    print(
+        "AI Recommendation:",
+        recommendation
+    )
+
+    print(
+        "AI Reasoning:",
+        reasoning
+    )
+
+    print()
+
+    print(
+        "Guardrail Decision:",
+        guardrail_decision
+    )
+
+    print(
+        "Guardrail Reason:",
+        guardrail_reason
+    )
+
+    print(
+        "FINAL ACTION:",
+        final_action
+    )
+
 
     # ======================================
     # AUDIT LOG
@@ -218,87 +233,196 @@ for index, payment in failed_payments.iterrows():
     audit_logs.append({
 
         "payment_id": payment_id,
+
+        "customer_id": customer_id,
+
         "amount": amount,
+
         "failure_reason": failure_reason,
+
         "attempt_count": attempt_count,
 
         "priority": priority,
-        "probability": probability,
 
-        "ai_recommendation": ai_recommendation,
-        "ai_reasoning": ai_reasoning,
+        "customer_reliability":
+            customer_reliability,
 
-        "agent_mode": agent_mode,
-        "ai_recommendation": ai_recommendation,
-        "ai_confidence": ai_confidence,
-        "ai_reasoning": ai_reasoning,
+        "recovery_probability":
+            recovery_probability,
 
-        "expected_recovery": round(
-            expected_revenue,
-            2
-        ),
+        "recovery_score":
+            recovery_score,
 
-        "guardrail_decision": decision,
-        "guardrail_reason": guardrail_reason,
+        "risk_level":
+            risk_level,
 
-        "final_action": final_action,
-        "recovery_status": recovery_status
+        "expected_recovery":
+            round(expected_revenue, 2),
+
+        "ai_recommendation":
+            recommendation,
+
+        "ai_reasoning":
+            reasoning,
+
+        "guardrail_decision":
+            guardrail_decision,
+
+        "guardrail_reason":
+            guardrail_reason,
+
+        "final_action":
+            final_action
     })
 
 
 # ==========================================
-# 7. FINAL SUMMARY
+# 5. FINAL RECOVERY SUMMARY
 # ==========================================
 
 print("\n")
-print("=" * 80)
-print("RECOVERY SUMMARY")
-print("=" * 80)
+print("=" * 100)
+print("RECOVERAI RECOVERY SUMMARY")
+print("=" * 100)
 
-print("Total Revenue at Risk:")
-print("INR", revenue_at_risk)
 
-print("\nExpected Recoverable Revenue:")
+print(
+    "TOTAL REVENUE AT RISK:"
+)
+
+print(
+    "INR",
+    revenue_at_risk
+)
+
+
+print(
+    "\nEXPECTED RECOVERABLE REVENUE:"
+)
+
 print(
     "INR",
     round(total_expected_revenue, 2)
 )
 
-print("\nActual Revenue Recovered:")
-print("INR", actual_recovered_revenue)
+
+# ==========================================
+# 6. HUMAN REVIEW COUNT
+# ==========================================
+
+human_review_count = sum(
+
+    1
+
+    for log in audit_logs
+
+    if log["guardrail_decision"]
+    == "HUMAN_REVIEW"
+)
 
 
-if revenue_at_risk > 0:
-
-    recovery_rate = (
-        actual_recovered_revenue
-        / revenue_at_risk
-    ) * 100
-
-else:
-
-    recovery_rate = 0
-
-
-print("\nActual Recovery Rate:")
 print(
-    round(recovery_rate, 2),
-    "%"
+    "\nPAYMENTS REQUIRING HUMAN REVIEW:"
+)
+
+print(
+    human_review_count
 )
 
 
 # ==========================================
-# 8. SAVE AUDIT TRAIL
+# 7. BLOCKED / STOPPED RECOVERIES
 # ==========================================
 
-audit_df = pd.DataFrame(audit_logs)
+stopped_count = sum(
+
+    1
+
+    for log in audit_logs
+
+    if log["guardrail_decision"]
+    == "STOP"
+)
+
+
+print(
+    "\nPAYMENTS BLOCKED BY GUARDRAILS:"
+)
+
+print(
+    stopped_count
+)
+
+
+# ==========================================
+# 8. BUILD SMART RECOVERY QUEUE
+# ==========================================
+
+recovery_queue = build_recovery_queue(
+    audit_logs
+)
+
+
+# ==========================================
+# 9. DISPLAY SMART RECOVERY QUEUE
+# ==========================================
+
+display_queue(
+    recovery_queue
+)
+
+
+# ==========================================
+# 10. SAVE AUDIT TRAIL
+# ==========================================
+
+audit_df = pd.DataFrame(
+    audit_logs
+)
 
 audit_df.to_csv(
     "audit_log.csv",
     index=False
 )
 
-print("\nAudit trail saved to:")
-print("audit_log.csv")
 
-print("\nAgent execution completed.")
+print(
+    "\nAudit trail saved to:"
+)
+
+print(
+    "audit_log.csv"
+)
+
+
+# ==========================================
+# 11. SAVE SMART RECOVERY QUEUE
+# ==========================================
+
+queue_df = pd.DataFrame(
+    recovery_queue
+)
+
+queue_df.to_csv(
+    "recovery_queue.csv",
+    index=False
+)
+
+
+print(
+    "\nSmart recovery queue saved to:"
+)
+
+print(
+    "recovery_queue.csv"
+)
+
+
+# ==========================================
+# 12. FINAL SYSTEM STATUS
+# ==========================================
+
+print("\n")
+print("=" * 100)
+print("RECOVERAI AGENT EXECUTION COMPLETED")
+print("=" * 100)

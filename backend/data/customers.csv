@@ -1,0 +1,11 @@
+customer_id,customer_age_days,successful_payments,failed_payments,previous_recovery_rate,average_payment_amount,preferred_payment_method
+CUST001,420,18,2,90,2800,card
+CUST002,310,10,1,90,1500,upi
+CUST003,650,25,0,100,5000,card
+CUST004,380,12,1,92,3200,card
+CUST005,180,6,3,67,900,upi
+CUST006,500,20,0,100,1500,upi
+CUST007,270,8,4,60,7200,bank
+CUST008,220,7,3,70,2100,card
+CUST009,440,15,0,100,950,upi
+CUST010,350,14,1,93,4300,card
