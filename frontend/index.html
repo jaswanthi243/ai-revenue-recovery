@@ -17,20 +17,21 @@
     >
 </head>
 
-
 <body>
 
     <!-- =========================================
-         TOP BAR
+         HEADER
     ========================================== -->
 
     <header class="topbar">
 
-        <div class="brand">
+        <div>
 
             <div class="brand-row">
 
-                <h1>RecoverAI</h1>
+                <h1>
+                    RecoverAI
+                </h1>
 
                 <span class="version-badge">
                     AGENTIC AI
@@ -77,12 +78,13 @@
                 </h2>
 
                 <p>
-                    RecoverAI analyzes failed payments,
-                    estimates recovery probability,
+                    RecoverAI detects failed payments,
+                    evaluates recovery probability,
                     applies safety guardrails and
                     prioritizes the highest-value
-                    recovery opportunities.
+                    opportunities.
                 </p>
+
 
                 <div class="hero-actions">
 
@@ -92,6 +94,7 @@
                     >
                         Run Recovery Scan
                     </button>
+
 
                     <button
                         onclick="scrollToQueue()"
@@ -123,11 +126,23 @@
                 <div class="agent-flow">
 
                     <div class="flow-item">
-                        <span class="flow-number">01</span>
+
+                        <span class="flow-number">
+                            01
+                        </span>
+
                         <div>
-                            <strong>Detect</strong>
-                            <small>Failed payments</small>
+
+                            <strong>
+                                Detect
+                            </strong>
+
+                            <small>
+                                Failed payments
+                            </small>
+
                         </div>
+
                     </div>
 
 
@@ -135,11 +150,23 @@
 
 
                     <div class="flow-item">
-                        <span class="flow-number">02</span>
+
+                        <span class="flow-number">
+                            02
+                        </span>
+
                         <div>
-                            <strong>Analyze</strong>
-                            <small>Risk & probability</small>
+
+                            <strong>
+                                Analyze
+                            </strong>
+
+                            <small>
+                                Risk & probability
+                            </small>
+
                         </div>
+
                     </div>
 
 
@@ -147,11 +174,23 @@
 
 
                     <div class="flow-item">
-                        <span class="flow-number">03</span>
+
+                        <span class="flow-number">
+                            03
+                        </span>
+
                         <div>
-                            <strong>Decide</strong>
-                            <small>AI recovery action</small>
+
+                            <strong>
+                                Decide
+                            </strong>
+
+                            <small>
+                                AI recovery action
+                            </small>
+
                         </div>
+
                     </div>
 
 
@@ -159,11 +198,23 @@
 
 
                     <div class="flow-item">
-                        <span class="flow-number">04</span>
+
+                        <span class="flow-number">
+                            04
+                        </span>
+
                         <div>
-                            <strong>Protect</strong>
-                            <small>Guardrail validation</small>
+
+                            <strong>
+                                Execute
+                            </strong>
+
+                            <small>
+                                Guarded simulation
+                            </small>
+
                         </div>
+
                     </div>
 
                 </div>
@@ -182,17 +233,9 @@
 
             <div class="metric-card risk-metric">
 
-                <div class="metric-top">
-
-                    <span>
-                        Revenue at Risk
-                    </span>
-
-                    <span class="metric-icon">
-                        ₹
-                    </span>
-
-                </div>
+                <span>
+                    Revenue at Risk
+                </span>
 
                 <h2 id="revenue-at-risk">
                     ₹0
@@ -207,17 +250,9 @@
 
             <div class="metric-card expected-metric">
 
-                <div class="metric-top">
-
-                    <span>
-                        Expected Recoverable
-                    </span>
-
-                    <span class="metric-icon">
-                        ↗
-                    </span>
-
-                </div>
+                <span>
+                    Expected Recoverable
+                </span>
 
                 <h2 id="expected-revenue">
                     ₹0
@@ -232,17 +267,9 @@
 
             <div class="metric-card recovered-metric">
 
-                <div class="metric-top">
-
-                    <span>
-                        Simulated Recovered
-                    </span>
-
-                    <span class="metric-icon">
-                        ✓
-                    </span>
-
-                </div>
+                <span>
+                    Simulated Recovered
+                </span>
 
                 <h2 id="recovered-revenue">
                     ₹0
@@ -257,17 +284,9 @@
 
             <div class="metric-card rate-metric">
 
-                <div class="metric-top">
-
-                    <span>
-                        Recovery Rate
-                    </span>
-
-                    <span class="metric-icon">
-                        %
-                    </span>
-
-                </div>
+                <span>
+                    Recovery Rate
+                </span>
 
                 <h2 id="recovery-rate">
                     0%
@@ -284,10 +303,10 @@
 
 
         <!-- =========================================
-             RECOVERY PIPELINE
+             PIPELINE
         ========================================== -->
 
-        <section class="panel pipeline-panel">
+        <section class="panel">
 
             <div class="panel-heading">
 
@@ -302,8 +321,7 @@
                     </h2>
 
                     <p>
-                        Live overview of the revenue
-                        recovery process
+                        Real-time recovery lifecycle
                     </p>
 
                 </div>
@@ -315,7 +333,7 @@
 
                 <div class="pipeline-stage">
 
-                    <span class="pipeline-dot danger-dot"></span>
+                    <span class="danger-dot pipeline-dot"></span>
 
                     <small>
                         FAILED
@@ -339,10 +357,10 @@
 
                 <div class="pipeline-stage">
 
-                    <span class="pipeline-dot ai-dot"></span>
+                    <span class="ai-dot pipeline-dot"></span>
 
                     <small>
-                        AI ANALYSIS
+                        ANALYZED
                     </small>
 
                     <strong id="pipeline-analyzed">
@@ -350,7 +368,7 @@
                     </strong>
 
                     <p>
-                        Decisions generated
+                        AI decisions
                     </p>
 
                 </div>
@@ -363,10 +381,10 @@
 
                 <div class="pipeline-stage">
 
-                    <span class="pipeline-dot review-dot"></span>
+                    <span class="review-dot pipeline-dot"></span>
 
                     <small>
-                        GUARDED
+                        REVIEW
                     </small>
 
                     <strong id="pipeline-reviewed">
@@ -374,7 +392,7 @@
                     </strong>
 
                     <p>
-                        Human review cases
+                        Guarded cases
                     </p>
 
                 </div>
@@ -387,7 +405,7 @@
 
                 <div class="pipeline-stage">
 
-                    <span class="pipeline-dot success-dot"></span>
+                    <span class="success-dot pipeline-dot"></span>
 
                     <small>
                         RECOVERY
@@ -398,7 +416,7 @@
                     </strong>
 
                     <p>
-                        Revenue recovered
+                        Simulated recovered
                     </p>
 
                 </div>
@@ -428,21 +446,16 @@
                     </h2>
 
                     <p>
+
                         <span id="failed-count">
                             0
                         </span>
+
                         transactions require attention
+
                     </p>
 
                 </div>
-
-
-                <button
-                    onclick="loadFailedPayments()"
-                    class="small-btn"
-                >
-                    Refresh
-                </button>
 
             </div>
 
@@ -455,25 +468,15 @@
 
                         <tr>
 
-                            <th>
-                                Payment
-                            </th>
+                            <th>Payment</th>
 
-                            <th>
-                                Amount
-                            </th>
+                            <th>Amount</th>
 
-                            <th>
-                                Failure Reason
-                            </th>
+                            <th>Failure Reason</th>
 
-                            <th>
-                                Attempts
-                            </th>
+                            <th>Attempts</th>
 
-                            <th>
-                                Recovery
-                            </th>
+                            <th>Action</th>
 
                         </tr>
 
@@ -505,7 +508,7 @@
         ========================================== -->
 
         <section
-            class="panel recovery-queue-panel"
+            class="panel"
             id="recovery-queue-section"
         >
 
@@ -522,9 +525,8 @@
                     </h2>
 
                     <p>
-                        AI-ranked opportunities based on
-                        expected value, recovery score
-                        and priority
+                        Highest-value recovery
+                        opportunities first
                     </p>
 
                 </div>
@@ -535,7 +537,6 @@
                 </span>
 
             </div>
-
 
 
             <div class="queue-summary">
@@ -594,7 +595,6 @@
             </div>
 
 
-
             <div class="table-container">
 
                 <table>
@@ -603,37 +603,21 @@
 
                         <tr>
 
-                            <th>
-                                Rank
-                            </th>
+                            <th>Rank</th>
 
-                            <th>
-                                Payment
-                            </th>
+                            <th>Payment</th>
 
-                            <th>
-                                Amount
-                            </th>
+                            <th>Amount</th>
 
-                            <th>
-                                Expected
-                            </th>
+                            <th>Expected</th>
 
-                            <th>
-                                Score
-                            </th>
+                            <th>Score</th>
 
-                            <th>
-                                Priority
-                            </th>
+                            <th>Priority</th>
 
-                            <th>
-                                Guardrail
-                            </th>
+                            <th>Guardrail</th>
 
-                            <th>
-                                Final Action
-                            </th>
+                            <th>Final Action</th>
 
                         </tr>
 
@@ -645,7 +629,8 @@
                         <tr>
 
                             <td colspan="8">
-                                Loading recovery opportunities...
+                                Analyze payments to
+                                build the queue.
                             </td>
 
                         </tr>
@@ -679,15 +664,14 @@
                     </h2>
 
                     <p>
-                        Explainable AI-assisted payment
-                        recovery analysis
+                        Explainable recovery analysis
                     </p>
 
                 </div>
 
 
                 <span class="ai-badge">
-                    ✦ Gemini AI
+                    Gemini AI
                 </span>
 
             </div>
@@ -698,13 +682,219 @@
                 class="empty-decision"
             >
 
-                Select a failed payment above and click
+                Select a failed payment and click
 
                 <strong>
                     Analyze
                 </strong>
 
                 to view RecoverAI's decision.
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =========================================
+             ACTION CENTER
+        ========================================== -->
+
+        <section
+            class="panel action-center-panel"
+            id="action-center"
+        >
+
+            <div class="panel-heading">
+
+                <div>
+
+                    <span class="section-label">
+                        EXECUTION CONTROL
+                    </span>
+
+                    <h2>
+                        Action Center
+                    </h2>
+
+                    <p>
+                        Track every simulated
+                        recovery action
+                    </p>
+
+                </div>
+
+
+                <button
+                    class="small-btn"
+                    onclick="loadActionCenter()"
+                >
+                    Refresh
+                </button>
+
+            </div>
+
+
+            <!-- ACTION SUMMARY -->
+
+            <div class="action-summary-grid">
+
+                <div class="action-stat-card">
+
+                    <span>
+                        Total Actions
+                    </span>
+
+                    <strong id="action-total">
+                        0
+                    </strong>
+
+                    <small>
+                        Recovery executions
+                    </small>
+
+                </div>
+
+
+                <div class="action-stat-card scheduled-card">
+
+                    <span>
+                        Scheduled
+                    </span>
+
+                    <strong id="action-scheduled">
+                        0
+                    </strong>
+
+                    <small>
+                        Future retries
+                    </small>
+
+                </div>
+
+
+                <div class="action-stat-card review-card">
+
+                    <span>
+                        Awaiting Approval
+                    </span>
+
+                    <strong id="action-review">
+                        0
+                    </strong>
+
+                    <small>
+                        Human review required
+                    </small>
+
+                </div>
+
+
+                <div class="action-stat-card blocked-card">
+
+                    <span>
+                        Blocked
+                    </span>
+
+                    <strong id="action-blocked">
+                        0
+                    </strong>
+
+                    <small>
+                        Guardrail prevented
+                    </small>
+
+                </div>
+
+
+                <div class="action-stat-card customer-card">
+
+                    <span>
+                        Customer Action
+                    </span>
+
+                    <strong id="action-customer">
+                        0
+                    </strong>
+
+                    <small>
+                        Payment update required
+                    </small>
+
+                </div>
+
+            </div>
+
+
+            <!-- ACTION HISTORY -->
+
+            <div class="action-history-header">
+
+                <div>
+
+                    <h3>
+                        Execution History
+                    </h3>
+
+                    <p>
+                        Latest recovery actions
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="table-container">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Payment
+                            </th>
+
+                            <th>
+                                Amount
+                            </th>
+
+                            <th>
+                                Action
+                            </th>
+
+                            <th>
+                                Status
+                            </th>
+
+                            <th>
+                                Simulation
+                            </th>
+
+                            <th>
+                                Time
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody id="action-history-table">
+
+                        <tr>
+
+                            <td colspan="6">
+                                No recovery actions yet.
+                            </td>
+
+                        </tr>
+
+                    </tbody>
+
+                </table>
 
             </div>
 
@@ -731,14 +921,15 @@
                     </h2>
 
                     <p>
-                        Safety controls governing
+                        Safety controls protecting
                         autonomous recovery actions
                     </p>
 
                 </div>
 
+
                 <span class="shield-badge">
-                    🛡 PROTECTED
+                    PROTECTED
                 </span>
 
             </div>
@@ -756,10 +947,6 @@
                         0
                     </strong>
 
-                    <small>
-                        Requires approval
-                    </small>
-
                 </div>
 
 
@@ -772,10 +959,6 @@
                     <strong id="guardrail-blocked">
                         0
                     </strong>
-
-                    <small>
-                        Prevented by policy
-                    </small>
 
                 </div>
 
@@ -790,10 +973,6 @@
                         ACTIVE
                     </strong>
 
-                    <small>
-                        Every action validated
-                    </small>
-
                 </div>
 
 
@@ -806,10 +985,6 @@
                     <strong class="safe-text">
                         ENABLED
                     </strong>
-
-                    <small>
-                        Full audit trail
-                    </small>
 
                 </div>
 
@@ -838,16 +1013,16 @@
                     </h2>
 
                     <p>
-                        Recent RecoverAI analysis and
-                        agent decisions
+                        Recent RecoverAI analysis
+                        and decisions
                     </p>
 
                 </div>
 
 
                 <button
-                    onclick="loadAuditHistory()"
                     class="small-btn"
+                    onclick="loadAuditHistory()"
                 >
                     Refresh
                 </button>
@@ -915,33 +1090,15 @@
         </section>
 
 
-
-        <!-- =========================================
-             FOOTER
-        ========================================== -->
-
         <footer class="footer">
 
-            <div>
+            <strong>
+                RecoverAI
+            </strong>
 
-                <strong>
-                    RecoverAI
-                </strong>
-
-                <span>
-                    Autonomous Revenue Recovery Engine
-                </span>
-
-            </div>
-
-
-            <div class="footer-status">
-
-                <span class="status-dot"></span>
-
-                All systems operational
-
-            </div>
+            <span>
+                Autonomous Revenue Recovery Engine
+            </span>
 
         </footer>
 

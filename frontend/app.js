@@ -1,7 +1,3 @@
-// =========================================================
-// RECOVERAI FRONTEND
-// =========================================================
-
 const API_URL =
     "https://ai-revenue-recovery-kugs.onrender.com";
 
@@ -12,10 +8,9 @@ const API_URL =
 
 function formatMoney(value) {
 
-    const number =
-        Number(value || 0);
-
-    return `₹${number.toLocaleString("en-IN")}`;
+    return `₹${Number(
+        value || 0
+    ).toLocaleString("en-IN")}`;
 }
 
 
@@ -26,7 +21,9 @@ function formatLabel(value) {
     }
 
     return String(value)
+
         .replaceAll("_", " ")
+
         .replace(
             /\b\w/g,
             letter =>
@@ -40,16 +37,14 @@ function safeNumber(value) {
     const number =
         Number(value);
 
-    if (Number.isNaN(number)) {
-        return 0;
-    }
-
-    return number;
+    return Number.isNaN(number)
+        ? 0
+        : number;
 }
 
 
 // =========================================================
-// LOAD RECOVERY SUMMARY
+// SUMMARY
 // =========================================================
 
 async function loadSummary() {
@@ -60,14 +55,6 @@ async function loadSummary() {
             await fetch(
                 `${API_URL}/recovery-summary`
             );
-
-
-        if (!response.ok) {
-
-            throw new Error(
-                "Unable to load recovery summary"
-            );
-        }
 
 
         const data =
@@ -101,25 +88,19 @@ async function loadSummary() {
         document.getElementById(
             "recovery-rate"
         ).textContent =
-            `${safeNumber(
-                data.recovery_rate
-            )}%`;
+            `${data.recovery_rate}%`;
 
 
         document.getElementById(
             "failed-count"
         ).textContent =
-            safeNumber(
-                data.failed_payments
-            );
+            data.failed_payments;
 
 
         document.getElementById(
             "pipeline-failed"
         ).textContent =
-            safeNumber(
-                data.failed_payments
-            );
+            data.failed_payments;
 
 
         document.getElementById(
@@ -130,41 +111,23 @@ async function loadSummary() {
             );
 
 
-        if (
-            document.getElementById(
-                "guardrail-human-review"
-            )
-        ) {
-
-            document.getElementById(
-                "guardrail-human-review"
-            ).textContent =
-                safeNumber(
-                    data.human_review_cases
-                );
-        }
+        document.getElementById(
+            "guardrail-human-review"
+        ).textContent =
+            data.human_review_cases;
 
 
-        if (
-            document.getElementById(
-                "guardrail-blocked"
-            )
-        ) {
-
-            document.getElementById(
-                "guardrail-blocked"
-            ).textContent =
-                safeNumber(
-                    data.blocked_cases
-                );
-        }
+        document.getElementById(
+            "guardrail-blocked"
+        ).textContent =
+            data.blocked_cases;
 
     }
 
     catch (error) {
 
         console.error(
-            "Unable to load recovery summary:",
+            "Summary error:",
             error
         );
     }
@@ -172,7 +135,7 @@ async function loadSummary() {
 
 
 // =========================================================
-// LOAD FAILED PAYMENTS
+// FAILED PAYMENTS
 // =========================================================
 
 async function loadFailedPayments() {
@@ -185,30 +148,10 @@ async function loadFailedPayments() {
 
     try {
 
-        table.innerHTML = `
-
-            <tr>
-
-                <td colspan="5">
-                    Loading failed payments...
-                </td>
-
-            </tr>
-        `;
-
-
         const response =
             await fetch(
                 `${API_URL}/failed-payments`
             );
-
-
-        if (!response.ok) {
-
-            throw new Error(
-                "Unable to load failed payments"
-            );
-        }
 
 
         const payments =
@@ -216,26 +159,6 @@ async function loadFailedPayments() {
 
 
         table.innerHTML = "";
-
-
-        if (
-            !Array.isArray(payments) ||
-            payments.length === 0
-        ) {
-
-            table.innerHTML = `
-
-                <tr>
-
-                    <td colspan="5">
-                        No failed payments found.
-                    </td>
-
-                </tr>
-            `;
-
-            return;
-        }
 
 
         payments.forEach(
@@ -250,79 +173,47 @@ async function loadFailedPayments() {
                 row.innerHTML = `
 
                     <td>
-
-                        <div class="payment-id">
-
-                            <span class="payment-dot">
-                            </span>
-
-                            <strong>
-                                ${payment.payment_id}
-                            </strong>
-
-                        </div>
-
-                    </td>
-
-
-                    <td>
-
                         <strong>
-                            ${formatMoney(
-                                payment.amount
-                            )}
+                            ${payment.payment_id}
                         </strong>
-
                     </td>
 
+                    <td>
+                        ${formatMoney(
+                            payment.amount
+                        )}
+                    </td>
 
                     <td>
-
                         ${formatLabel(
                             payment.failure_reason
                         )}
-
                     </td>
 
-
                     <td>
-
-                        <span class="attempt-badge">
-
-                            ${payment.attempt_count}
-
-                        </span>
-
+                        ${payment.attempt_count}
                     </td>
 
-
                     <td>
-
                         <button
                             class="analyze-btn"
                         >
                             Analyze
                         </button>
-
                     </td>
                 `;
 
 
-                const button =
-                    row.querySelector(
-                        ".analyze-btn"
-                    );
+                row.querySelector(
+                    ".analyze-btn"
+                ).addEventListener(
 
-
-                button.addEventListener(
                     "click",
-                    () => {
 
+                    () =>
                         analyzePayment(
                             payment
-                        );
-
-                    }
+                        )
                 );
 
 
@@ -338,21 +229,9 @@ async function loadFailedPayments() {
     catch (error) {
 
         console.error(
-            "Unable to load failed payments:",
             error
         );
 
-
-        table.innerHTML = `
-
-            <tr>
-
-                <td colspan="5">
-                    Unable to load failed payments.
-                </td>
-
-            </tr>
-        `;
     }
 }
 
@@ -363,41 +242,30 @@ async function loadFailedPayments() {
 
 async function analyzePayment(payment) {
 
-    const decisionBox =
+    const box =
         document.getElementById(
             "decision-box"
         );
 
 
-    decisionBox.className =
-        "analyzing-decision";
+    box.innerHTML = `
 
+        <div class="loading-box">
 
-    decisionBox.innerHTML = `
-
-        <div class="analyzing-content">
-
-            <div class="ai-loader"></div>
-
-            <strong>
-                RecoverAI is analyzing
-                ${payment.payment_id}
-            </strong>
-
-            <span>
-                Evaluating recovery probability,
-                customer risk and guardrails...
-            </span>
+            RecoverAI is analyzing
+            ${payment.payment_id}...
 
         </div>
     `;
 
 
-    decisionBox.scrollIntoView({
+    box.scrollIntoView({
 
-        behavior: "smooth",
+        behavior:
+            "smooth",
 
-        block: "center"
+        block:
+            "center"
 
     });
 
@@ -411,7 +279,8 @@ async function analyzePayment(payment) {
 
                 {
 
-                    method: "POST",
+                    method:
+                        "POST",
 
                     headers: {
 
@@ -419,33 +288,26 @@ async function analyzePayment(payment) {
                             "application/json"
                     },
 
-                    body: JSON.stringify({
+                    body:
+                        JSON.stringify({
 
-                        payment_id:
-                            payment.payment_id,
+                            payment_id:
+                                payment.payment_id,
 
-                        amount:
-                            payment.amount,
+                            customer_id:
+                                payment.customer_id,
 
-                        failure_reason:
-                            payment.failure_reason,
+                            amount:
+                                payment.amount,
 
-                        attempt_count:
-                            payment.attempt_count,
+                            failure_reason:
+                                payment.failure_reason,
 
-                        customer_id:
-                            payment.customer_id
-                    })
+                            attempt_count:
+                                payment.attempt_count
+                        })
                 }
             );
-
-
-        if (!response.ok) {
-
-            throw new Error(
-                "Payment analysis failed"
-            );
-        }
 
 
         const data =
@@ -453,97 +315,31 @@ async function analyzePayment(payment) {
 
 
         const priority =
-            data.risk_analysis
-                ?.priority || "LOW";
+            data.risk_analysis.priority;
 
 
         const probability =
-            safeNumber(
-                data.risk_analysis
-                    ?.recovery_probability
-            );
-
-
-        const expectedRecovery =
-            safeNumber(
-                data.risk_analysis
-                    ?.expected_recovery
-            );
-
-
-        const recoveryScore =
-            safeNumber(
-                data.risk_analysis
-                    ?.recovery_score
-            );
-
-
-        const customerReliability =
-            safeNumber(
-                data.risk_analysis
-                    ?.customer_reliability
-            );
-
-
-        const riskLevel =
             data.risk_analysis
-                ?.risk_level || "-";
+                .recovery_probability;
+
+
+        const expected =
+            data.risk_analysis
+                .expected_recovery;
+
+
+        const score =
+            data.risk_analysis
+                .recovery_score;
+
+
+        const reliability =
+            data.risk_analysis
+                .customer_reliability;
 
 
         const guardrail =
-            data.guardrails
-                ?.decision ||
-            "UNKNOWN";
-
-
-        const guardrailReason =
-            data.guardrails
-                ?.reason ||
-            "-";
-
-
-        const recommendation =
-            data.recoverai
-                ?.recommendation ||
-            "-";
-
-
-        const reasoning =
-            data.recoverai
-                ?.reasoning ||
-            "No reasoning available.";
-
-
-        const finalAction =
-            data.final_action ||
-            recommendation;
-
-
-        const agentMode =
-            data.recoverai
-                ?.agent_mode ||
-            "RecoverAI Agent";
-
-
-        let confidence =
-            "N/A";
-
-
-        if (
-            data.recoverai?.confidence !==
-                null &&
-            data.recoverai?.confidence !==
-                undefined
-        ) {
-
-            confidence =
-                `${Math.round(
-                    Number(
-                        data.recoverai
-                            .confidence
-                    ) * 100
-                )}%`;
-        }
+            data.guardrails.decision;
 
 
         let guardrailClass =
@@ -570,39 +366,27 @@ async function analyzePayment(payment) {
         }
 
 
-        decisionBox.className = "";
+        const confidence =
+            Math.round(
+                data.recoverai
+                    .confidence
+                * 100
+            );
 
 
-        decisionBox.innerHTML = `
+        box.innerHTML = `
 
-            <div class="decision-hero">
+            <div class="decision-grid">
 
-                <div>
-
-                    <span class="decision-label">
-                        RECOVERAI DECISION
-                    </span>
-
-                    <h3>
-                        ${data.payment_id}
-                    </h3>
-
-                    <p>
-                        ${formatLabel(
-                            payment.failure_reason
-                        )}
-                    </p>
-
-                </div>
-
-
-                <div class="decision-amount">
+                <div class="decision-card">
 
                     <span>
-                        PAYMENT VALUE
+                        Payment
                     </span>
 
                     <strong>
+                        ${data.payment_id}
+                        ·
                         ${formatMoney(
                             data.amount
                         )}
@@ -610,16 +394,11 @@ async function analyzePayment(payment) {
 
                 </div>
 
-            </div>
-
-
-            <div class="decision-grid">
-
 
                 <div class="decision-card">
 
                     <span>
-                        Risk Priority
+                        Priority
                     </span>
 
                     <strong
@@ -637,26 +416,11 @@ async function analyzePayment(payment) {
                 <div class="decision-card">
 
                     <span>
-                        Risk Level
-                    </span>
-
-                    <strong>
-                        ${formatLabel(
-                            riskLevel
-                        )}
-                    </strong>
-
-                </div>
-
-
-                <div class="decision-card">
-
-                    <span>
                         Recovery Score
                     </span>
 
                     <strong>
-                        ${recoveryScore}/100
+                        ${score}/100
                     </strong>
 
                 </div>
@@ -669,8 +433,35 @@ async function analyzePayment(payment) {
                     </span>
 
                     <strong>
-                        ${customerReliability}/100
+                        ${reliability}/100
                     </strong>
+
+                </div>
+
+
+                <div class="decision-card full-width">
+
+                    <span>
+                        Recovery Probability
+                    </span>
+
+                    <strong>
+                        ${probability}%
+                    </strong>
+
+
+                    <div class="progress">
+
+                        <div
+                            class="progress-bar"
+                            style="
+                                width:
+                                ${probability}%
+                            "
+                        >
+                        </div>
+
+                    </div>
 
                 </div>
 
@@ -682,11 +473,9 @@ async function analyzePayment(payment) {
                     </span>
 
                     <strong class="money-success">
-
                         ${formatMoney(
-                            expectedRecovery
+                            expected
                         )}
-
                     </strong>
 
                 </div>
@@ -699,7 +488,38 @@ async function analyzePayment(payment) {
                     </span>
 
                     <strong>
-                        ${confidence}
+                        ${confidence}%
+                    </strong>
+
+                </div>
+
+
+                <div class="decision-card">
+
+                    <span>
+                        AI Recommendation
+                    </span>
+
+                    <strong>
+                        ${formatLabel(
+                            data.recoverai
+                                .recommendation
+                        )}
+                    </strong>
+
+                </div>
+
+
+                <div class="decision-card">
+
+                    <span>
+                        Final Action
+                    </span>
+
+                    <strong>
+                        ${formatLabel(
+                            data.final_action
+                        )}
                     </strong>
 
                 </div>
@@ -713,67 +533,11 @@ async function analyzePayment(payment) {
                 >
 
                     <span>
-                        Recovery Probability
-                    </span>
-
-                    <div class="probability-row">
-
-                        <strong>
-                            ${probability}%
-                        </strong>
-
-                        <span>
-                            Estimated likelihood
-                            of successful recovery
-                        </span>
-
-                    </div>
-
-
-                    <div class="progress">
-
-                        <div
-                            class="progress-bar"
-                            style="
-                                width:
-                                ${Math.min(
-                                    probability,
-                                    100
-                                )}%
-                            "
-                        >
-                        </div>
-
-                    </div>
-
-                </div>
-
-
-                <div class="decision-card">
-
-                    <span>
-                        AI Recommendation
+                        Why RecoverAI chose this
                     </span>
 
                     <strong>
-                        ${formatLabel(
-                            recommendation
-                        )}
-                    </strong>
-
-                </div>
-
-
-                <div class="decision-card">
-
-                    <span>
-                        Agent Mode
-                    </span>
-
-                    <strong>
-                        ${formatLabel(
-                            agentMode
-                        )}
+                        ${data.recoverai.reasoning}
                     </strong>
 
                 </div>
@@ -799,32 +563,14 @@ async function analyzePayment(payment) {
                 <div class="decision-card">
 
                     <span>
-                        Final Action
+                        Agent Mode
                     </span>
 
                     <strong>
                         ${formatLabel(
-                            finalAction
+                            data.recoverai
+                                .agent_mode
                         )}
-                    </strong>
-
-                </div>
-
-
-                <div
-                    class="
-                        decision-card
-                        full-width
-                        reasoning-card
-                    "
-                >
-
-                    <span>
-                        Why RecoverAI chose this
-                    </span>
-
-                    <strong>
-                        ${reasoning}
                     </strong>
 
                 </div>
@@ -842,7 +588,7 @@ async function analyzePayment(payment) {
                     </span>
 
                     <strong>
-                        ${guardrailReason}
+                        ${data.guardrails.reason}
                     </strong>
 
                 </div>
@@ -860,16 +606,15 @@ async function analyzePayment(payment) {
                         Recovery Execution
                     </span>
 
-                    <p class="execute-description">
-
-                        The selected recovery action
-                        will be simulated.
-                        No real payment is processed.
-
+                    <p>
+                        This is a simulated recovery
+                        action. No real payment
+                        is processed.
                     </p>
 
+
                     <button
-                        id="execute-recovery-button"
+                        id="execute-btn"
                         class="execute-recovery-btn"
                     >
                         Execute Recovery
@@ -877,7 +622,7 @@ async function analyzePayment(payment) {
 
 
                     <div
-                        id="execution-result-${data.payment_id}"
+                        id="execution-result"
                         class="execution-result"
                     >
                     </div>
@@ -888,28 +633,23 @@ async function analyzePayment(payment) {
         `;
 
 
-        const executeButton =
-            document.getElementById(
-                "execute-recovery-button"
-            );
+        document.getElementById(
+            "execute-btn"
+        ).addEventListener(
 
-
-        executeButton.addEventListener(
             "click",
-            () => {
 
+            () =>
                 executeRecovery(
 
                     data.payment_id,
 
                     data.amount,
 
-                    finalAction,
+                    data.final_action,
 
                     guardrail
-                );
-
-            }
+                )
         );
 
 
@@ -919,29 +659,18 @@ async function analyzePayment(payment) {
 
     catch (error) {
 
+        box.innerHTML =
+            "Unable to analyze payment.";
+
         console.error(
             error
         );
-
-
-        decisionBox.className =
-            "empty-decision";
-
-
-        decisionBox.innerHTML = `
-
-            Unable to analyze this payment.
-
-            <strong>
-                Please try again.
-            </strong>
-        `;
     }
 }
 
 
 // =========================================================
-// EXECUTE RECOVERY ACTION
+// EXECUTE RECOVERY
 // =========================================================
 
 async function executeRecovery(
@@ -953,43 +682,29 @@ async function executeRecovery(
 
     const resultBox =
         document.getElementById(
-            `execution-result-${paymentId}`
+            "execution-result"
         );
 
 
-    const executeButton =
+    const button =
         document.getElementById(
-            "execute-recovery-button"
+            "execute-btn"
         );
 
 
-    if (!resultBox) {
-
-        return;
-    }
+    button.disabled =
+        true;
 
 
-    if (executeButton) {
-
-        executeButton.disabled =
-            true;
-
-        executeButton.textContent =
-            "Executing...";
-    }
+    button.textContent =
+        "Executing...";
 
 
     resultBox.innerHTML = `
 
         <div class="execution-loading">
 
-            <div
-                class="execution-spinner"
-            >
-            </div>
-
-            Executing simulated
-            recovery action...
+            Simulating recovery action...
 
         </div>
     `;
@@ -1004,7 +719,8 @@ async function executeRecovery(
 
                 {
 
-                    method: "POST",
+                    method:
+                        "POST",
 
                     headers: {
 
@@ -1012,30 +728,23 @@ async function executeRecovery(
                             "application/json"
                     },
 
-                    body: JSON.stringify({
+                    body:
+                        JSON.stringify({
 
-                        payment_id:
-                            paymentId,
+                            payment_id:
+                                paymentId,
 
-                        amount:
-                            amount,
+                            amount:
+                                amount,
 
-                        final_action:
-                            finalAction,
+                            final_action:
+                                finalAction,
 
-                        guardrail_decision:
-                            guardrailDecision
-                    })
+                            guardrail_decision:
+                                guardrailDecision
+                        })
                 }
             );
-
-
-        if (!response.ok) {
-
-            throw new Error(
-                "Execution request failed"
-            );
-        }
 
 
         const result =
@@ -1046,10 +755,6 @@ async function executeRecovery(
             "execution-success";
 
 
-        let statusIcon =
-            "✓";
-
-
         if (
             result.execution_status ===
             "AWAITING_APPROVAL"
@@ -1057,9 +762,6 @@ async function executeRecovery(
 
             statusClass =
                 "execution-review";
-
-            statusIcon =
-                "!";
         }
 
 
@@ -1070,22 +772,6 @@ async function executeRecovery(
 
             statusClass =
                 "execution-blocked";
-
-            statusIcon =
-                "×";
-        }
-
-
-        if (
-            result.execution_status ===
-            "NO_ACTION"
-        ) {
-
-            statusClass =
-                "execution-neutral";
-
-            statusIcon =
-                "•";
         }
 
 
@@ -1093,56 +779,15 @@ async function executeRecovery(
 
             <div class="${statusClass}">
 
-                <div
-                    class="
-                        execution-status-header
-                    "
-                >
-
-                    <span
-                        class="
-                            execution-status-icon
-                        "
-                    >
-                        ${statusIcon}
-                    </span>
-
-                    <strong>
-                        ${formatLabel(
-                            result.execution_status
-                        )}
-                    </strong>
-
-                </div>
-
+                <strong>
+                    ${formatLabel(
+                        result.execution_status
+                    )}
+                </strong>
 
                 <p>
                     ${result.message}
                 </p>
-
-
-                <div
-                    class="
-                        execution-meta
-                    "
-                >
-
-                    <span>
-                        Action:
-                        ${formatLabel(
-                            result.action
-                        )}
-                    </span>
-
-                    <span>
-                        Simulation:
-                        ${result.simulated
-                            ? "Yes"
-                            : "No"}
-                    </span>
-
-                </div>
-
 
                 <small>
                     ${result.timestamp}
@@ -1152,88 +797,311 @@ async function executeRecovery(
         `;
 
 
-        if (executeButton) {
-
-            executeButton.textContent =
-                "Action Simulated";
-        }
+        button.textContent =
+            "Action Simulated";
 
 
-        await loadAuditHistory();
-
-        await loadSummary();
+        await loadActionCenter();
 
     }
 
     catch (error) {
 
-        console.error(
-            "Recovery execution failed:",
-            error
-        );
+        button.disabled =
+            false;
+
+
+        button.textContent =
+            "Try Again";
 
 
         resultBox.innerHTML = `
 
             <div class="execution-blocked">
 
-                <div
-                    class="
-                        execution-status-header
-                    "
-                >
-
-                    <span
-                        class="
-                            execution-status-icon
-                        "
-                    >
-                        ×
-                    </span>
-
-                    <strong>
-                        Execution Failed
-                    </strong>
-
-                </div>
-
-                <p>
-                    Unable to execute
-                    the recovery action.
-                </p>
+                Execution Failed
 
             </div>
         `;
 
 
-        if (executeButton) {
-
-            executeButton.disabled =
-                false;
-
-            executeButton.textContent =
-                "Try Again";
-        }
+        console.error(
+            error
+        );
     }
 }
 
 
 // =========================================================
-// CALCULATE SMART QUEUE SCORE
+// ACTION CENTER
+// =========================================================
+
+async function loadActionCenter() {
+
+    await Promise.all([
+
+        loadActionSummary(),
+
+        loadActionHistory()
+
+    ]);
+}
+
+
+// =========================================================
+// ACTION SUMMARY
+// =========================================================
+
+async function loadActionSummary() {
+
+    try {
+
+        const response =
+            await fetch(
+                `${API_URL}/action-summary`
+            );
+
+
+        const data =
+            await response.json();
+
+
+        document.getElementById(
+            "action-total"
+        ).textContent =
+            data.total_actions;
+
+
+        document.getElementById(
+            "action-scheduled"
+        ).textContent =
+            data.scheduled;
+
+
+        document.getElementById(
+            "action-review"
+        ).textContent =
+            data.awaiting_approval;
+
+
+        document.getElementById(
+            "action-blocked"
+        ).textContent =
+            data.blocked;
+
+
+        document.getElementById(
+            "action-customer"
+        ).textContent =
+            data.customer_action_required;
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Action summary error:",
+            error
+        );
+    }
+}
+
+
+// =========================================================
+// ACTION HISTORY
+// =========================================================
+
+async function loadActionHistory() {
+
+    const table =
+        document.getElementById(
+            "action-history-table"
+        );
+
+
+    try {
+
+        const response =
+            await fetch(
+                `${API_URL}/action-history`
+            );
+
+
+        const records =
+            await response.json();
+
+
+        table.innerHTML =
+            "";
+
+
+        if (
+            records.length === 0
+        ) {
+
+            table.innerHTML = `
+
+                <tr>
+
+                    <td colspan="6">
+
+                        No recovery actions yet.
+
+                    </td>
+
+                </tr>
+            `;
+
+            return;
+        }
+
+
+        records.forEach(
+            record => {
+
+                const row =
+                    document.createElement(
+                        "tr"
+                    );
+
+
+                let statusClass =
+                    "status-normal";
+
+
+                if (
+                    record.execution_status ===
+                    "AWAITING_APPROVAL"
+                ) {
+
+                    statusClass =
+                        "status-review";
+                }
+
+
+                if (
+                    record.execution_status ===
+                    "BLOCKED"
+                ) {
+
+                    statusClass =
+                        "status-blocked";
+                }
+
+
+                if (
+                    record.execution_status ===
+                    "SCHEDULED"
+                ) {
+
+                    statusClass =
+                        "status-scheduled";
+                }
+
+
+                if (
+                    record.execution_status ===
+                    "CUSTOMER_ACTION_REQUIRED"
+                ) {
+
+                    statusClass =
+                        "status-customer";
+                }
+
+
+                row.innerHTML = `
+
+                    <td>
+                        <strong>
+                            ${record.payment_id}
+                        </strong>
+                    </td>
+
+
+                    <td>
+                        ${formatMoney(
+                            record.amount
+                        )}
+                    </td>
+
+
+                    <td>
+                        ${formatLabel(
+                            record.action
+                        )}
+                    </td>
+
+
+                    <td>
+
+                        <span
+                            class="
+                                action-status
+                                ${statusClass}
+                            "
+                        >
+
+                            ${formatLabel(
+                                record.execution_status
+                            )}
+
+                        </span>
+
+                    </td>
+
+
+                    <td>
+
+                        ${record.simulated
+                            ? "Yes"
+                            : "No"}
+
+                    </td>
+
+
+                    <td>
+
+                        ${record.timestamp}
+
+                    </td>
+                `;
+
+
+                table.appendChild(
+                    row
+                );
+
+            }
+        );
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Action history error:",
+            error
+        );
+    }
+}
+
+
+// =========================================================
+// QUEUE SCORE
 // =========================================================
 
 function calculateQueueScore(record) {
 
-    const expectedRecovery =
+    let score =
         safeNumber(
             record.expected_recovery
         );
 
 
-    const recoveryScore =
+    score +=
         safeNumber(
             record.recovery_score
-        );
+        ) * 10;
 
 
     const priority =
@@ -1242,19 +1110,12 @@ function calculateQueueScore(record) {
         ).toUpperCase();
 
 
-    let score =
-        expectedRecovery;
-
-
-    score +=
-        recoveryScore * 10;
-
-
     if (
         priority === "HIGH"
     ) {
 
-        score += 500;
+        score +=
+            500;
     }
 
 
@@ -1262,41 +1123,29 @@ function calculateQueueScore(record) {
         priority === "MEDIUM"
     ) {
 
-        score += 250;
+        score +=
+            250;
     }
 
 
-    return Math.round(
-        score * 100
-    ) / 100;
+    return score;
 }
 
 
 // =========================================================
-// BUILD SMART RECOVERY QUEUE
+// SMART QUEUE
 // =========================================================
 
 function buildRecoveryQueue(records) {
 
-    if (!Array.isArray(records)) {
-
-        return [];
-    }
-
-
-    const latestPayments =
+    const latest =
         new Map();
 
 
     records.forEach(
         record => {
 
-            if (!record.payment_id) {
-                return;
-            }
-
-
-            latestPayments.set(
+            latest.set(
                 record.payment_id,
                 record
             );
@@ -1306,20 +1155,22 @@ function buildRecoveryQueue(records) {
 
 
     return Array.from(
-        latestPayments.values()
+        latest.values()
     )
-        .map(
-            record => ({
 
-                ...record,
+        .map(
+            item => ({
+
+                ...item,
 
                 queue_score:
                     calculateQueueScore(
-                        record
+                        item
                     )
 
             })
         )
+
         .sort(
             (a, b) =>
                 b.queue_score -
@@ -1329,12 +1180,10 @@ function buildRecoveryQueue(records) {
 
 
 // =========================================================
-// DISPLAY SMART RECOVERY QUEUE
+// DISPLAY QUEUE
 // =========================================================
 
-function displayRecoveryQueue(
-    queue
-) {
+function displayRecoveryQueue(queue) {
 
     const table =
         document.getElementById(
@@ -1342,17 +1191,11 @@ function displayRecoveryQueue(
         );
 
 
-    if (!table) {
-
-        return;
-    }
-
-
-    table.innerHTML = "";
+    table.innerHTML =
+        "";
 
 
     if (
-        !Array.isArray(queue) ||
         queue.length === 0
     ) {
 
@@ -1362,49 +1205,16 @@ function displayRecoveryQueue(
 
                 <td colspan="8">
 
-                    Analyze a payment to begin
-                    building the recovery queue.
+                    Analyze payments to
+                    build the queue.
 
                 </td>
 
             </tr>
         `;
 
-
-        document.getElementById(
-            "queue-count"
-        ).textContent =
-            "0";
-
-
-        document.getElementById(
-            "top-opportunity"
-        ).textContent =
-            "-";
-
-
-        document.getElementById(
-            "top-expected"
-        ).textContent =
-            "₹0";
-
-
-        document.getElementById(
-            "queue-human-review"
-        ).textContent =
-            "0";
-
-
         return;
     }
-
-
-    const humanReviewCount =
-        queue.filter(
-            item =>
-                item.guardrail_decision ===
-                "HUMAN_REVIEW"
-        ).length;
 
 
     document.getElementById(
@@ -1430,7 +1240,12 @@ function displayRecoveryQueue(
     document.getElementById(
         "queue-human-review"
     ).textContent =
-        humanReviewCount;
+
+        queue.filter(
+            x =>
+                x.guardrail_decision ===
+                "HUMAN_REVIEW"
+        ).length;
 
 
     queue.forEach(
@@ -1443,172 +1258,37 @@ function displayRecoveryQueue(
 
 
             const priority =
-                String(
-                    item.priority ||
-                    "LOW"
-                ).toUpperCase();
-
-
-            const guardrail =
-                item.guardrail_decision ||
-                "PROCEED";
-
-
-            let guardrailClass =
-                "guardrail-proceed";
-
-
-            if (
-                guardrail ===
-                "HUMAN_REVIEW"
-            ) {
-
-                guardrailClass =
-                    "guardrail-review";
-            }
-
-
-            if (
-                guardrail ===
-                "STOP"
-            ) {
-
-                guardrailClass =
-                    "guardrail-stop";
-            }
-
-
-            let actionClass =
-                "queue-action-normal";
-
-
-            if (
-                item.final_action ===
-                "human_review"
-            ) {
-
-                actionClass =
-                    "queue-action-review";
-            }
-
-
-            if (
-                guardrail ===
-                "STOP"
-            ) {
-
-                actionClass =
-                    "queue-action-stop";
-            }
-
-
-            const rankClass =
-                index === 0
-                    ?
-                    "queue-rank queue-rank-first"
-                    :
-                    "queue-rank";
+                item.priority ||
+                "LOW";
 
 
             row.innerHTML = `
 
                 <td>
-
-                    <span
-                        class="${rankClass}"
-                    >
-                        #${index + 1}
-                    </span>
-
+                    #${index + 1}
                 </td>
 
-
                 <td>
-
                     <strong>
                         ${item.payment_id}
                     </strong>
-
                 </td>
 
-
                 <td>
-
                     ${formatMoney(
                         item.amount
                     )}
-
                 </td>
-
 
                 <td>
-
-                    <strong
-                        class="expected-value"
-                    >
-
-                        ${formatMoney(
-                            item.expected_recovery
-                        )}
-
-                    </strong>
-
+                    ${formatMoney(
+                        item.expected_recovery
+                    )}
                 </td>
-
 
                 <td>
-
-                    <div
-                        class="
-                            queue-score-wrapper
-                        "
-                    >
-
-                        <div
-                            class="
-                                score-number-row
-                            "
-                        >
-
-                            <strong>
-                                ${safeNumber(
-                                    item.recovery_score
-                                )}
-                            </strong>
-
-                            <small>
-                                /100
-                            </small>
-
-                        </div>
-
-
-                        <div
-                            class="queue-score-bar"
-                        >
-
-                            <div
-                                class="
-                                    queue-score-fill
-                                "
-                                style="
-                                    width:
-                                    ${Math.min(
-                                        safeNumber(
-                                            item.recovery_score
-                                        ),
-                                        100
-                                    )}%
-                                "
-                            >
-                            </div>
-
-                        </div>
-
-                    </div>
-
+                    ${item.recovery_score}/100
                 </td>
-
 
                 <td>
 
@@ -1625,34 +1305,16 @@ function displayRecoveryQueue(
 
                 </td>
 
-
                 <td>
-
-                    <strong
-                        class="${guardrailClass}"
-                    >
-
-                        ${formatLabel(
-                            guardrail
-                        )}
-
-                    </strong>
-
+                    ${formatLabel(
+                        item.guardrail_decision
+                    )}
                 </td>
 
-
                 <td>
-
-                    <strong
-                        class="${actionClass}"
-                    >
-
-                        ${formatLabel(
-                            item.final_action
-                        )}
-
-                    </strong>
-
+                    ${formatLabel(
+                        item.final_action
+                    )}
                 </td>
             `;
 
@@ -1667,7 +1329,7 @@ function displayRecoveryQueue(
 
 
 // =========================================================
-// LOAD AUDIT HISTORY
+// AUDIT HISTORY
 // =========================================================
 
 async function loadAuditHistory() {
@@ -1680,14 +1342,6 @@ async function loadAuditHistory() {
             );
 
 
-        if (!response.ok) {
-
-            throw new Error(
-                "Unable to load audit history"
-            );
-        }
-
-
         const records =
             await response.json();
 
@@ -1698,47 +1352,32 @@ async function loadAuditHistory() {
             );
 
 
-        table.innerHTML = "";
+        table.innerHTML =
+            "";
 
 
         if (
-            !Array.isArray(records) ||
             records.length === 0
         ) {
 
             table.innerHTML = `
 
                 <tr>
-
                     <td colspan="7">
-
                         No recovery activity yet.
-
                     </td>
-
                 </tr>
             `;
-
-
-            displayRecoveryQueue(
-                []
-            );
-
-
-            updateGuardrails(
-                []
-            );
-
 
             return;
         }
 
 
-        const newestRecords =
+        const newest =
             [...records].reverse();
 
 
-        newestRecords.forEach(
+        newest.forEach(
             record => {
 
                 const row =
@@ -1747,78 +1386,36 @@ async function loadAuditHistory() {
                     );
 
 
-                let confidence =
-                    "N/A";
+                const priority =
+                    record.priority ||
+                    "LOW";
 
 
-                if (
-                    record.ai_confidence !==
-                        "" &&
-                    record.ai_confidence !==
-                        null &&
-                    record.ai_confidence !==
-                        undefined
-                ) {
-
-                    confidence =
+                const confidence =
+                    record.ai_confidence !== ""
+                        ?
                         `${Math.round(
                             Number(
                                 record.ai_confidence
                             ) * 100
-                        )}%`;
-                }
-
-
-                const priority =
-                    String(
-                        record.priority ||
-                        "LOW"
-                    ).toUpperCase();
-
-
-                let guardrailClass =
-                    "guardrail-proceed";
-
-
-                if (
-                    record.guardrail_decision ===
-                    "HUMAN_REVIEW"
-                ) {
-
-                    guardrailClass =
-                        "guardrail-review";
-                }
-
-
-                if (
-                    record.guardrail_decision ===
-                    "STOP"
-                ) {
-
-                    guardrailClass =
-                        "guardrail-stop";
-                }
+                        )}%`
+                        :
+                        "N/A";
 
 
                 row.innerHTML = `
 
                     <td>
-
                         <strong>
                             ${record.payment_id}
                         </strong>
-
                     </td>
 
-
                     <td>
-
                         ${formatMoney(
                             record.amount
                         )}
-
                     </td>
-
 
                     <td>
 
@@ -1835,44 +1432,26 @@ async function loadAuditHistory() {
 
                     </td>
 
-
                     <td>
-
                         ${formatLabel(
                             record.ai_recommendation
                         )}
-
                     </td>
 
-
                     <td>
-
                         ${confidence}
-
                     </td>
 
-
                     <td>
-
-                        <strong
-                            class="${guardrailClass}"
-                        >
-
-                            ${formatLabel(
-                                record.guardrail_decision
-                            )}
-
-                        </strong>
-
+                        ${formatLabel(
+                            record.guardrail_decision
+                        )}
                     </td>
 
-
                     <td>
-
                         ${formatLabel(
                             record.agent_mode
                         )}
-
                     </td>
                 `;
 
@@ -1885,32 +1464,44 @@ async function loadAuditHistory() {
         );
 
 
-        const recoveryQueue =
+        const queue =
             buildRecoveryQueue(
                 records
             );
 
 
         displayRecoveryQueue(
-            recoveryQueue
+            queue
         );
 
 
-        updateGuardrails(
-            records
-        );
+        document.getElementById(
+            "pipeline-analyzed"
+        ).textContent =
+
+            new Set(
+                records.map(
+                    x =>
+                        x.payment_id
+                )
+            ).size;
 
 
-        updatePipeline(
-            records
-        );
+        document.getElementById(
+            "pipeline-reviewed"
+        ).textContent =
+
+            records.filter(
+                x =>
+                    x.guardrail_decision ===
+                    "HUMAN_REVIEW"
+            ).length;
 
     }
 
     catch (error) {
 
         console.error(
-            "Unable to load audit history:",
             error
         );
     }
@@ -1918,172 +1509,44 @@ async function loadAuditHistory() {
 
 
 // =========================================================
-// UPDATE GUARDRAILS
-// =========================================================
-
-function updateGuardrails(
-    records
-) {
-
-    const humanReviewCount =
-        records.filter(
-            record =>
-                record.guardrail_decision ===
-                "HUMAN_REVIEW"
-        ).length;
-
-
-    const blockedCount =
-        records.filter(
-            record =>
-                record.guardrail_decision ===
-                "STOP"
-        ).length;
-
-
-    if (
-        document.getElementById(
-            "guardrail-human-review"
-        )
-    ) {
-
-        document.getElementById(
-            "guardrail-human-review"
-        ).textContent =
-            humanReviewCount;
-    }
-
-
-    if (
-        document.getElementById(
-            "guardrail-blocked"
-        )
-    ) {
-
-        document.getElementById(
-            "guardrail-blocked"
-        ).textContent =
-            blockedCount;
-    }
-
-
-    if (
-        document.getElementById(
-            "pipeline-reviewed"
-        )
-    ) {
-
-        document.getElementById(
-            "pipeline-reviewed"
-        ).textContent =
-            humanReviewCount;
-    }
-}
-
-
-// =========================================================
-// UPDATE PIPELINE
-// =========================================================
-
-function updatePipeline(
-    records
-) {
-
-    const uniquePayments =
-        new Set(
-            records.map(
-                record =>
-                    record.payment_id
-            )
-        );
-
-
-    if (
-        document.getElementById(
-            "pipeline-analyzed"
-        )
-    ) {
-
-        document.getElementById(
-            "pipeline-analyzed"
-        ).textContent =
-            uniquePayments.size;
-    }
-}
-
-
-// =========================================================
-// SCROLL TO QUEUE
+// SCROLL
 // =========================================================
 
 function scrollToQueue() {
 
-    const section =
-        document.getElementById(
-            "recovery-queue-section"
-        );
+    document.getElementById(
+        "recovery-queue-section"
+    ).scrollIntoView({
 
-
-    if (!section) {
-
-        return;
-    }
-
-
-    section.scrollIntoView({
-
-        behavior: "smooth",
-
-        block: "start"
+        behavior:
+            "smooth"
 
     });
 }
 
 
 // =========================================================
-// REFRESH DASHBOARD
+// REFRESH
 // =========================================================
 
 async function refreshDashboard() {
 
-    const buttons =
-        document.querySelectorAll(
-            "button"
-        );
+    await Promise.all([
 
+        loadSummary(),
 
-    buttons.forEach(
-        button =>
-            button.disabled = true
-    );
+        loadFailedPayments(),
 
+        loadAuditHistory(),
 
-    try {
+        loadActionCenter()
 
-        await Promise.all([
-
-            loadSummary(),
-
-            loadFailedPayments(),
-
-            loadAuditHistory()
-
-        ]);
-
-    }
-
-    finally {
-
-        buttons.forEach(
-            button =>
-                button.disabled = false
-        );
-    }
+    ]);
 }
 
 
 // =========================================================
-// INITIAL PAGE LOAD
+// INITIAL LOAD
 // =========================================================
 
 document.addEventListener(
@@ -2092,11 +1555,7 @@ document.addEventListener(
 
     () => {
 
-        loadSummary();
-
-        loadFailedPayments();
-
-        loadAuditHistory();
+        refreshDashboard();
 
     }
 );
