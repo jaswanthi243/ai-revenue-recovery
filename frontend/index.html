@@ -2,6 +2,7 @@
 <html lang="en">
 
 <head>
+
     <meta charset="UTF-8">
 
     <meta
@@ -9,15 +10,20 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>RecoverAI Dashboard</title>
+    <title>
+        RecoverAI Dashboard
+    </title>
 
     <link
         rel="stylesheet"
         href="style.css"
     >
+
 </head>
 
+
 <body>
+
 
     <!-- =========================================
          HEADER
@@ -57,6 +63,7 @@
     </header>
 
 
+
     <main class="container">
 
 
@@ -65,6 +72,7 @@
         ========================================== -->
 
         <section class="hero">
+
 
             <div class="hero-content">
 
@@ -80,32 +88,50 @@
                 <p>
                     RecoverAI detects failed payments,
                     evaluates recovery probability,
-                    applies safety guardrails and
-                    prioritizes the highest-value
-                    opportunities.
+                    applies safety guardrails,
+                    prioritizes opportunities,
+                    simulates recovery actions and
+                    keeps humans in control when needed.
                 </p>
 
 
                 <div class="hero-actions">
 
                     <button
-                        onclick="refreshDashboard()"
                         class="primary-btn"
+                        onclick="refreshDashboard()"
                     >
                         Run Recovery Scan
                     </button>
 
 
                     <button
-                        onclick="scrollToQueue()"
                         class="secondary-btn"
+                        onclick="scrollToQueue()"
                     >
-                        View Priority Queue
+                        Priority Queue
+                    </button>
+
+
+                    <button
+                        class="secondary-btn"
+                        onclick="scrollToLifecycle()"
+                    >
+                        Recovery Lifecycle
+                    </button>
+
+
+                    <button
+                        class="secondary-btn"
+                        onclick="scrollToHumanReview()"
+                    >
+                        Human Review
                     </button>
 
                 </div>
 
             </div>
+
 
 
             <div class="hero-agent-card">
@@ -124,6 +150,7 @@
 
 
                 <div class="agent-flow">
+
 
                     <div class="flow-item">
 
@@ -182,11 +209,11 @@
                         <div>
 
                             <strong>
-                                Decide
+                                Guard
                             </strong>
 
                             <small>
-                                AI recovery action
+                                Safety validation
                             </small>
 
                         </div>
@@ -210,7 +237,31 @@
                             </strong>
 
                             <small>
-                                Guarded simulation
+                                Recovery simulation
+                            </small>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="flow-line"></div>
+
+
+                    <div class="flow-item">
+
+                        <span class="flow-number">
+                            05
+                        </span>
+
+                        <div>
+
+                            <strong>
+                                Communicate
+                            </strong>
+
+                            <small>
+                                Customer message preview
                             </small>
 
                         </div>
@@ -230,6 +281,7 @@
         ========================================== -->
 
         <section class="metrics">
+
 
             <div class="metric-card risk-metric">
 
@@ -331,9 +383,16 @@
 
             <div class="pipeline">
 
+
                 <div class="pipeline-stage">
 
-                    <span class="danger-dot pipeline-dot"></span>
+                    <span
+                        class="
+                            pipeline-dot
+                            danger-dot
+                        "
+                    >
+                    </span>
 
                     <small>
                         FAILED
@@ -357,7 +416,13 @@
 
                 <div class="pipeline-stage">
 
-                    <span class="ai-dot pipeline-dot"></span>
+                    <span
+                        class="
+                            pipeline-dot
+                            ai-dot
+                        "
+                    >
+                    </span>
 
                     <small>
                         ANALYZED
@@ -381,7 +446,13 @@
 
                 <div class="pipeline-stage">
 
-                    <span class="review-dot pipeline-dot"></span>
+                    <span
+                        class="
+                            pipeline-dot
+                            review-dot
+                        "
+                    >
+                    </span>
 
                     <small>
                         REVIEW
@@ -405,7 +476,13 @@
 
                 <div class="pipeline-stage">
 
-                    <span class="success-dot pipeline-dot"></span>
+                    <span
+                        class="
+                            pipeline-dot
+                            success-dot
+                        "
+                    >
+                    </span>
 
                     <small>
                         RECOVERY
@@ -457,6 +534,14 @@
 
                 </div>
 
+
+                <button
+                    class="small-btn"
+                    onclick="loadFailedPayments()"
+                >
+                    Refresh
+                </button>
+
             </div>
 
 
@@ -468,15 +553,25 @@
 
                         <tr>
 
-                            <th>Payment</th>
+                            <th>
+                                Payment
+                            </th>
 
-                            <th>Amount</th>
+                            <th>
+                                Amount
+                            </th>
 
-                            <th>Failure Reason</th>
+                            <th>
+                                Failure Reason
+                            </th>
 
-                            <th>Attempts</th>
+                            <th>
+                                Attempts
+                            </th>
 
-                            <th>Action</th>
+                            <th>
+                                Action
+                            </th>
 
                         </tr>
 
@@ -525,8 +620,7 @@
                     </h2>
 
                     <p>
-                        Highest-value recovery
-                        opportunities first
+                        Highest-value opportunities first
                     </p>
 
                 </div>
@@ -540,6 +634,7 @@
 
 
             <div class="queue-summary">
+
 
                 <div class="queue-mini-card">
 
@@ -629,8 +724,10 @@
                         <tr>
 
                             <td colspan="8">
+
                                 Analyze payments to
                                 build the queue.
+
                             </td>
 
                         </tr>
@@ -638,6 +735,128 @@
                     </tbody>
 
                 </table>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =========================================
+             RECOVERY LIFECYCLE
+        ========================================== -->
+
+        <section
+            class="panel lifecycle-panel"
+            id="lifecycle-section"
+        >
+
+            <div class="panel-heading">
+
+                <div>
+
+                    <span class="section-label">
+                        PAYMENT JOURNEY
+                    </span>
+
+                    <h2>
+                        Recovery Status Lifecycle
+                    </h2>
+
+                    <p>
+                        Track the current recovery stage
+                        of every failed payment
+                    </p>
+
+                </div>
+
+
+                <button
+                    class="small-btn"
+                    onclick="loadRecoveryLifecycle()"
+                >
+                    Refresh
+                </button>
+
+            </div>
+
+
+            <div class="lifecycle-summary">
+
+                <div class="lifecycle-stat">
+
+                    <span>
+                        Failed
+                    </span>
+
+                    <strong id="lifecycle-failed">
+                        0
+                    </strong>
+
+                </div>
+
+
+                <div class="lifecycle-stat">
+
+                    <span>
+                        Analyzed
+                    </span>
+
+                    <strong id="lifecycle-analyzed">
+                        0
+                    </strong>
+
+                </div>
+
+
+                <div class="lifecycle-stat">
+
+                    <span>
+                        In Progress
+                    </span>
+
+                    <strong id="lifecycle-progress">
+                        0
+                    </strong>
+
+                </div>
+
+
+                <div class="lifecycle-stat">
+
+                    <span>
+                        Human Review
+                    </span>
+
+                    <strong id="lifecycle-review">
+                        0
+                    </strong>
+
+                </div>
+
+
+                <div class="lifecycle-stat">
+
+                    <span>
+                        Blocked
+                    </span>
+
+                    <strong id="lifecycle-blocked">
+                        0
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div id="lifecycle-list">
+
+                <div class="empty-review">
+
+                    Loading payment lifecycle...
+
+                </div>
 
             </div>
 
@@ -718,8 +937,7 @@
                     </h2>
 
                     <p>
-                        Track every simulated
-                        recovery action
+                        Track simulated recovery actions
                     </p>
 
                 </div>
@@ -735,9 +953,8 @@
             </div>
 
 
-            <!-- ACTION SUMMARY -->
-
             <div class="action-summary-grid">
+
 
                 <div class="action-stat-card">
 
@@ -750,7 +967,7 @@
                     </strong>
 
                     <small>
-                        Recovery executions
+                        Payment workflows
                     </small>
 
                 </div>
@@ -784,7 +1001,41 @@
                     </strong>
 
                     <small>
-                        Human review required
+                        Human review
+                    </small>
+
+                </div>
+
+
+                <div class="action-stat-card approved-card">
+
+                    <span>
+                        Approved
+                    </span>
+
+                    <strong id="action-approved">
+                        0
+                    </strong>
+
+                    <small>
+                        Approved cases
+                    </small>
+
+                </div>
+
+
+                <div class="action-stat-card rejected-card">
+
+                    <span>
+                        Rejected
+                    </span>
+
+                    <strong id="action-rejected">
+                        0
+                    </strong>
+
+                    <small>
+                        Rejected cases
                     </small>
 
                 </div>
@@ -818,7 +1069,7 @@
                     </strong>
 
                     <small>
-                        Payment update required
+                        Payment update needed
                     </small>
 
                 </div>
@@ -826,21 +1077,15 @@
             </div>
 
 
-            <!-- ACTION HISTORY -->
-
             <div class="action-history-header">
 
-                <div>
+                <h3>
+                    Execution History
+                </h3>
 
-                    <h3>
-                        Execution History
-                    </h3>
-
-                    <p>
-                        Latest recovery actions
-                    </p>
-
-                </div>
+                <p>
+                    Latest recovery actions
+                </p>
 
             </div>
 
@@ -853,29 +1098,17 @@
 
                         <tr>
 
-                            <th>
-                                Payment
-                            </th>
+                            <th>Payment</th>
 
-                            <th>
-                                Amount
-                            </th>
+                            <th>Amount</th>
 
-                            <th>
-                                Action
-                            </th>
+                            <th>Action</th>
 
-                            <th>
-                                Status
-                            </th>
+                            <th>Status</th>
 
-                            <th>
-                                Simulation
-                            </th>
+                            <th>Simulation</th>
 
-                            <th>
-                                Time
-                            </th>
+                            <th>Time</th>
 
                         </tr>
 
@@ -895,6 +1128,136 @@
                     </tbody>
 
                 </table>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =========================================
+             HUMAN REVIEW CENTER
+        ========================================== -->
+
+        <section
+            class="panel human-review-panel"
+            id="human-review-center"
+        >
+
+            <div class="panel-heading">
+
+                <div>
+
+                    <span class="section-label">
+                        HUMAN-IN-THE-LOOP
+                    </span>
+
+                    <h2>
+                        Human Review Center
+                    </h2>
+
+                    <p>
+                        Approve or reject recovery
+                        cases requiring manual review
+                    </p>
+
+                </div>
+
+
+                <div class="review-header-actions">
+
+                    <span class="review-count-badge">
+
+                        <span id="pending-review-count">
+                            0
+                        </span>
+
+                        Pending
+
+                    </span>
+
+
+                    <button
+                        class="small-btn"
+                        onclick="loadHumanReviews()"
+                    >
+                        Refresh
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <div id="human-review-list">
+
+                <div class="empty-review">
+
+                    No recovery cases are
+                    awaiting human approval.
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =========================================
+             CUSTOMER COMMUNICATION CENTER
+        ========================================== -->
+
+        <section
+            class="panel communication-panel"
+            id="communication-center"
+        >
+
+            <div class="panel-heading">
+
+                <div>
+
+                    <span class="section-label">
+                        CUSTOMER EXPERIENCE
+                    </span>
+
+                    <h2>
+                        Customer Communication Center
+                    </h2>
+
+                    <p>
+                        Preview customer messages created
+                        from RecoverAI recovery decisions
+                    </p>
+
+                </div>
+
+
+                <span class="preview-badge">
+                    PREVIEW ONLY
+                </span>
+
+            </div>
+
+
+            <div class="communication-note">
+
+                These messages are simulated previews.
+                RecoverAI is not sending SMS, email or
+                payment requests in this demo.
+
+            </div>
+
+
+            <div id="communication-list">
+
+                <div class="empty-review">
+
+                    Execute a recovery action to
+                    generate customer communication
+                    previews.
+
+                </div>
 
             </div>
 
@@ -936,6 +1299,7 @@
 
 
             <div class="guardrail-grid">
+
 
                 <div class="guardrail-card">
 
@@ -1038,33 +1402,19 @@
 
                         <tr>
 
-                            <th>
-                                Payment
-                            </th>
+                            <th>Payment</th>
 
-                            <th>
-                                Amount
-                            </th>
+                            <th>Amount</th>
 
-                            <th>
-                                Risk
-                            </th>
+                            <th>Risk</th>
 
-                            <th>
-                                AI Recommendation
-                            </th>
+                            <th>AI Recommendation</th>
 
-                            <th>
-                                Confidence
-                            </th>
+                            <th>Confidence</th>
 
-                            <th>
-                                Guardrail
-                            </th>
+                            <th>Guardrail</th>
 
-                            <th>
-                                Mode
-                            </th>
+                            <th>Mode</th>
 
                         </tr>
 
@@ -1090,6 +1440,7 @@
         </section>
 
 
+
         <footer class="footer">
 
             <strong>
@@ -1102,10 +1453,12 @@
 
         </footer>
 
+
     </main>
 
 
     <script src="app.js"></script>
+
 
 </body>
 

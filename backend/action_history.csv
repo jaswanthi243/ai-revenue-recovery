@@ -1,2 +1,13 @@
 payment_id,amount,action,execution_status,message,simulated,timestamp
 PAY001,2500.0,retry_later,SCHEDULED,A future payment retry has been simulated.,True,2026-08-23T21:54:50
+PAY007,7500.0,human_review,AWAITING_APPROVAL,Recovery action requires human approval before execution.,True,2026-08-23T22:09:31
+PAY007,7500.0,human_review,APPROVED,Human reviewer approved the recovery case. Reviewer note: Approved after manual verification.,True,2026-08-23T22:09:45
+PAY007,7500.0,human_review,AWAITING_APPROVAL,Recovery action requires human approval before execution.,True,2026-08-23T22:17:20
+PAY007,7500.0,human_review,APPROVED,Human reviewer approved the recovery case.,True,2026-08-23T22:17:43
+PAY007,7500.0,human_review,AWAITING_APPROVAL,Recovery action requires human approval before execution.,True,2026-08-23T22:18:07
+PAY007,7500.0,human_review,REJECTED,Human reviewer rejected the recovery case.,True,2026-08-23T22:18:14
+PAY007,7500.0,human_review,AWAITING_APPROVAL,Recovery action requires human approval before execution.,True,2026-08-23T22:18:40
+PAY007,7500.0,human_review,APPROVED,Human reviewer approved the recovery case. Reviewer note: done can be recover,True,2026-08-23T22:19:01
+PAY005,800.0,retry_later,SCHEDULED,A future payment retry has been simulated.,True,2026-08-23T22:42:01
+PAY007,7500.0,human_review,AWAITING_APPROVAL,Recovery action requires human approval before execution.,True,2026-08-23T22:46:15
+PAY007,7500.0,human_review,APPROVED,Human reviewer approved the recovery case.,True,2026-08-23T22:46:23

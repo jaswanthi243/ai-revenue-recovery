@@ -46,6 +46,45 @@ FIELDNAMES = [
 
 
 # ==========================================
+# NORMALIZE RECORD
+# ==========================================
+
+def normalize_record(row):
+
+    try:
+
+        row["amount"] = float(
+            row.get(
+                "amount",
+                0
+            )
+        )
+
+    except (
+        ValueError,
+        TypeError
+    ):
+
+        row["amount"] = 0
+
+
+    row["simulated"] = (
+
+        str(
+            row.get(
+                "simulated",
+                "True"
+            )
+        ).lower()
+
+        == "true"
+    )
+
+
+    return row
+
+
+# ==========================================
 # SAVE ACTION
 # ==========================================
 
@@ -85,24 +124,19 @@ def save_action(
     }
 
 
-    # ======================================
-    # CHECK WHETHER HEADER IS NEEDED
-    # ======================================
-
     file_exists = (
+
         os.path.exists(
             ACTION_HISTORY_FILE
         )
+
         and
+
         os.path.getsize(
             ACTION_HISTORY_FILE
         ) > 0
     )
 
-
-    # ======================================
-    # WRITE RECORD
-    # ======================================
 
     with open(
 
@@ -179,40 +213,307 @@ def get_action_history():
 
         for row in reader:
 
-            # Convert amount back to number
-
-            try:
-
-                row["amount"] = float(
-                    row["amount"]
-                )
-
-            except (
-                ValueError,
-                TypeError
-            ):
-
-                row["amount"] = 0
-
-
-            # Convert simulated back to bool
-
-            row["simulated"] = (
-
-                str(
-                    row["simulated"]
-                ).lower()
-
-                == "true"
-            )
-
-
             records.append(
-                row
+                normalize_record(
+                    row
+                )
             )
 
 
     return records
+
+
+# ==========================================
+# GET LATEST RECORD FOR EACH PAYMENT
+# ==========================================
+
+def get_latest_action_records():
+
+    history = get_action_history()
+
+
+    latest = {}
+
+
+    for record in history:
+
+        payment_id = record.get(
+            "payment_id"
+        )
+
+
+        if not payment_id:
+
+            continue
+
+
+        latest[
+            payment_id
+        ] = record
+
+
+    return list(
+        latest.values()
+    )
+
+
+# ==========================================
+# GET LATEST RECORD FOR PAYMENT
+# ==========================================
+
+def get_latest_action_for_payment(
+    payment_id
+):
+
+    history = get_action_history()
+
+
+    for record in reversed(
+        history
+    ):
+
+        if (
+            record.get(
+                "payment_id"
+            )
+            == payment_id
+        ):
+
+            return record
+
+
+    return None
+
+
+# ==========================================
+# GET PENDING HUMAN REVIEWS
+# ==========================================
+
+def get_pending_reviews():
+
+    latest_records = (
+        get_latest_action_records()
+    )
+
+
+    pending = []
+
+
+    for record in latest_records:
+
+        if (
+
+            record.get(
+                "execution_status"
+            )
+            == "AWAITING_APPROVAL"
+
+        ):
+
+            pending.append(
+                record
+            )
+
+
+    return pending
+
+
+# ==========================================
+# APPROVE HUMAN REVIEW
+# ==========================================
+
+def approve_review(
+    payment_id,
+    reviewer_note=None
+):
+
+    current = (
+        get_latest_action_for_payment(
+            payment_id
+        )
+    )
+
+
+    if not current:
+
+        return {
+
+            "success":
+                False,
+
+            "message":
+                "No action found for payment."
+        }
+
+
+    if (
+        current.get(
+            "execution_status"
+        )
+        != "AWAITING_APPROVAL"
+    ):
+
+        return {
+
+            "success":
+                False,
+
+            "message":
+                (
+                    "Payment is not currently "
+                    "awaiting human approval."
+                )
+        }
+
+
+    message = (
+        "Human reviewer approved the "
+        "recovery case."
+    )
+
+
+    if reviewer_note:
+
+        message += (
+            f" Reviewer note: "
+            f"{reviewer_note}"
+        )
+
+
+    record = save_action(
+
+        payment_id=
+            current[
+                "payment_id"
+            ],
+
+        amount=
+            current[
+                "amount"
+            ],
+
+        action=
+            current[
+                "action"
+            ],
+
+        execution_status=
+            "APPROVED",
+
+        message=
+            message,
+
+        simulated=True
+    )
+
+
+    return {
+
+        "success":
+            True,
+
+        "record":
+            record
+    }
+
+
+# ==========================================
+# REJECT HUMAN REVIEW
+# ==========================================
+
+def reject_review(
+    payment_id,
+    reviewer_note=None
+):
+
+    current = (
+        get_latest_action_for_payment(
+            payment_id
+        )
+    )
+
+
+    if not current:
+
+        return {
+
+            "success":
+                False,
+
+            "message":
+                "No action found for payment."
+        }
+
+
+    if (
+        current.get(
+            "execution_status"
+        )
+        != "AWAITING_APPROVAL"
+    ):
+
+        return {
+
+            "success":
+                False,
+
+            "message":
+                (
+                    "Payment is not currently "
+                    "awaiting human approval."
+                )
+        }
+
+
+    message = (
+        "Human reviewer rejected the "
+        "recovery case."
+    )
+
+
+    if reviewer_note:
+
+        message += (
+            f" Reviewer note: "
+            f"{reviewer_note}"
+        )
+
+
+    record = save_action(
+
+        payment_id=
+            current[
+                "payment_id"
+            ],
+
+        amount=
+            current[
+                "amount"
+            ],
+
+        action=
+            current[
+                "action"
+            ],
+
+        execution_status=
+            "REJECTED",
+
+        message=
+            message,
+
+        simulated=True
+    )
+
+
+    return {
+
+        "success":
+            True,
+
+        "record":
+            record
+    }
 
 
 # ==========================================
@@ -222,7 +523,7 @@ def get_action_history():
 def get_action_summary():
 
     history = (
-        get_action_history()
+        get_latest_action_records()
     )
 
 
@@ -235,6 +536,12 @@ def get_action_summary():
     customer_action = 0
 
     retry_simulated = 0
+
+    approved = 0
+
+    rejected = 0
+
+    no_action = 0
 
 
     for record in history:
@@ -279,6 +586,21 @@ def get_action_summary():
             retry_simulated += 1
 
 
+        elif status == "APPROVED":
+
+            approved += 1
+
+
+        elif status == "REJECTED":
+
+            rejected += 1
+
+
+        elif status == "NO_ACTION":
+
+            no_action += 1
+
+
     return {
 
         "total_actions":
@@ -297,13 +619,22 @@ def get_action_summary():
             customer_action,
 
         "retry_simulated":
-            retry_simulated
+            retry_simulated,
+
+        "approved":
+            approved,
+
+        "rejected":
+            rejected,
+
+        "no_action":
+            no_action
     }
 
 
 # ==========================================
 # CLEAR HISTORY
-# Useful only for local testing
+# LOCAL TEST ONLY
 # ==========================================
 
 def clear_action_history():
@@ -331,23 +662,24 @@ def clear_action_history():
 if __name__ == "__main__":
 
     print(
-        "\nSaving test action..."
+        "\nSaving human review test..."
     )
 
 
-    result = save_action(
+    save_action(
 
-        payment_id="PAY001",
+        payment_id="PAY007",
 
-        amount=2500,
+        amount=7500,
 
-        action="retry_later",
+        action="human_review",
 
-        execution_status="SCHEDULED",
+        execution_status=
+            "AWAITING_APPROVAL",
 
         message=(
-            "A future payment retry "
-            "has been simulated."
+            "Recovery action requires "
+            "human approval before execution."
         ),
 
         simulated=True
@@ -355,21 +687,12 @@ if __name__ == "__main__":
 
 
     print(
-        "\nSaved:"
-    )
-
-    print(
-        result
-    )
-
-
-    print(
-        "\nAction History:"
+        "\nPending Reviews:"
     )
 
 
     for item in (
-        get_action_history()
+        get_pending_reviews()
     ):
 
         print(
@@ -378,8 +701,22 @@ if __name__ == "__main__":
 
 
     print(
-        "\nAction Summary:"
+        "\nApproving PAY007..."
     )
+
+
+    print(
+        approve_review(
+            "PAY007",
+            "Approved during local test."
+        )
+    )
+
+
+    print(
+        "\nSummary:"
+    )
+
 
     print(
         get_action_summary()

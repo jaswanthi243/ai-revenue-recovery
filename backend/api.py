@@ -1,5 +1,12 @@
-from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import (
+    FastAPI,
+    HTTPException
+)
+
+from fastapi.middleware.cors import (
+    CORSMiddleware
+)
+
 from pydantic import BaseModel
 
 import pandas as pd
@@ -7,15 +14,26 @@ import os
 
 from datetime import datetime
 
-from services.recovery_agent import analyze_payment
+
+from services.recovery_agent import (
+    analyze_payment
+)
 
 from services.action_executor import (
     execute_recovery_action
 )
 
 from services.action_history import (
+
     get_action_history,
-    get_action_summary
+
+    get_action_summary,
+
+    get_pending_reviews,
+
+    approve_review,
+
+    reject_review
 )
 
 
@@ -29,14 +47,19 @@ BASE_DIR = os.path.dirname(
 
 
 PAYMENTS_FILE = os.path.join(
+
     BASE_DIR,
+
     "data",
+
     "payments.csv"
 )
 
 
 AUDIT_FILE = os.path.join(
+
     BASE_DIR,
+
     "audit_log.csv"
 )
 
@@ -47,14 +70,16 @@ AUDIT_FILE = os.path.join(
 
 app = FastAPI(
 
-    title="RecoverAI API",
+    title=
+        "RecoverAI API",
 
     description=(
         "AI-powered failed payment "
         "recovery system"
     ),
 
-    version="2.2.0"
+    version=
+        "2.3.0"
 )
 
 
@@ -80,7 +105,9 @@ app.add_middleware(
 # REQUEST MODELS
 # ==========================================
 
-class PaymentRequest(BaseModel):
+class PaymentRequest(
+    BaseModel
+):
 
     payment_id: str
 
@@ -90,10 +117,14 @@ class PaymentRequest(BaseModel):
 
     attempt_count: int
 
-    customer_id: str | None = None
+    customer_id: (
+        str | None
+    ) = None
 
 
-class ExecuteActionRequest(BaseModel):
+class ExecuteActionRequest(
+    BaseModel
+):
 
     payment_id: str
 
@@ -104,8 +135,19 @@ class ExecuteActionRequest(BaseModel):
     guardrail_decision: str
 
 
+class HumanReviewRequest(
+    BaseModel
+):
+
+    payment_id: str
+
+    reviewer_note: (
+        str | None
+    ) = None
+
+
 # ==========================================
-# LOAD PAYMENT DATA
+# LOAD PAYMENTS
 # ==========================================
 
 def load_payments():
@@ -138,12 +180,16 @@ def find_customer_id(
     payment_id
 ):
 
-    payments = load_payments()
+    payments = (
+        load_payments()
+    )
 
 
     match = payments[
 
-        payments["payment_id"]
+        payments[
+            "payment_id"
+        ]
         == payment_id
 
     ]
@@ -178,7 +224,7 @@ def home():
             "RecoverAI",
 
         "version":
-            "2.2.0",
+            "2.3.0",
 
         "message":
             "RecoverAI API is running"
@@ -201,7 +247,7 @@ def health_check():
             "RecoverAI",
 
         "version":
-            "2.2.0"
+            "2.3.0"
     }
 
 
@@ -241,7 +287,9 @@ def get_failed_payments():
 
     failed = payments[
 
-        payments["status"]
+        payments[
+            "status"
+        ]
         == "failed"
 
     ]
@@ -275,7 +323,9 @@ def get_payment(
 
     payment = payments[
 
-        payments["payment_id"]
+        payments[
+            "payment_id"
+        ]
         == payment_id
 
     ]
@@ -287,11 +337,12 @@ def get_payment(
 
             status_code=404,
 
-            detail="Payment not found"
+            detail=
+                "Payment not found"
         )
 
 
-    result = (
+    return (
 
         payment
         .iloc[0]
@@ -300,14 +351,13 @@ def get_payment(
     )
 
 
-    return result
-
-
 # ==========================================
 # RECOVERY SUMMARY
 # ==========================================
 
-@app.get("/recovery-summary")
+@app.get(
+    "/recovery-summary"
+)
 def recovery_summary():
 
     payments = (
@@ -317,7 +367,9 @@ def recovery_summary():
 
     failed = payments[
 
-        payments["status"]
+        payments[
+            "status"
+        ]
         == "failed"
 
     ]
@@ -339,10 +391,6 @@ def recovery_summary():
 
     blocked_count = 0
 
-
-    # ======================================
-    # ANALYZE FAILED PAYMENTS
-    # ======================================
 
     for _, payment in (
         failed.iterrows()
@@ -390,10 +438,6 @@ def recovery_summary():
         )
 
 
-        # ==================================
-        # DEMO RECOVERED VALUE
-        # ==================================
-
         if (
 
             result[
@@ -418,10 +462,6 @@ def recovery_summary():
             )
 
 
-        # ==================================
-        # HUMAN REVIEW
-        # ==================================
-
         if (
 
             result[
@@ -434,10 +474,6 @@ def recovery_summary():
             human_review_count += 1
 
 
-        # ==================================
-        # BLOCKED
-        # ==================================
-
         if (
 
             result[
@@ -449,10 +485,6 @@ def recovery_summary():
 
             blocked_count += 1
 
-
-    # ======================================
-    # RECOVERY RATE
-    # ======================================
 
     if revenue_at_risk > 0:
 
@@ -510,14 +542,12 @@ def recovery_summary():
 # ANALYZE PAYMENT
 # ==========================================
 
-@app.post("/analyze-payment")
+@app.post(
+    "/analyze-payment"
+)
 def analyze_payment_endpoint(
     payment: PaymentRequest
 ):
-
-    # ======================================
-    # FIND CUSTOMER
-    # ======================================
 
     customer_id = (
         payment.customer_id
@@ -527,6 +557,7 @@ def analyze_payment_endpoint(
     if not customer_id:
 
         customer_id = (
+
             find_customer_id(
                 payment.payment_id
             )
@@ -545,10 +576,6 @@ def analyze_payment_endpoint(
             )
         )
 
-
-    # ======================================
-    # RECOVERAI ANALYSIS
-    # ======================================
 
     result = analyze_payment(
 
@@ -572,10 +599,6 @@ def analyze_payment_endpoint(
     )
 
 
-    # ======================================
-    # CONFIDENCE
-    # ======================================
-
     ai_confidence = (
 
         result[
@@ -585,10 +608,6 @@ def analyze_payment_endpoint(
         / 100
     )
 
-
-    # ======================================
-    # AUDIT RECORD
-    # ======================================
 
     audit_record = {
 
@@ -685,10 +704,6 @@ def analyze_payment_endpoint(
     }
 
 
-    # ======================================
-    # SAVE AUDIT LOG
-    # ======================================
-
     audit_df = pd.DataFrame(
         [audit_record]
     )
@@ -734,10 +749,6 @@ def analyze_payment_endpoint(
             index=False
         )
 
-
-    # ======================================
-    # RESPONSE
-    # ======================================
 
     return {
 
@@ -843,48 +854,45 @@ def analyze_payment_endpoint(
 
 
 # ==========================================
-# EXECUTE RECOVERY ACTION
+# EXECUTE ACTION
 # ==========================================
 
-@app.post("/execute-action")
+@app.post(
+    "/execute-action"
+)
 def execute_action(
     request: ExecuteActionRequest
 ):
 
-    result = (
-        execute_recovery_action(
+    return execute_recovery_action(
 
-            payment_id=
-                request.payment_id,
+        payment_id=
+            request.payment_id,
 
-            amount=
-                request.amount,
+        amount=
+            request.amount,
 
-            final_action=
-                request.final_action,
+        final_action=
+            request.final_action,
 
-            guardrail_decision=
-                request.guardrail_decision
-        )
+        guardrail_decision=
+            request.guardrail_decision
     )
-
-
-    return result
 
 
 # ==========================================
 # ACTION HISTORY
 # ==========================================
 
-@app.get("/action-history")
+@app.get(
+    "/action-history"
+)
 def action_history_endpoint():
 
     history = (
         get_action_history()
     )
 
-
-    # Newest first
 
     return list(
         reversed(
@@ -897,7 +905,9 @@ def action_history_endpoint():
 # ACTION SUMMARY
 # ==========================================
 
-@app.get("/action-summary")
+@app.get(
+    "/action-summary"
+)
 def action_summary_endpoint():
 
     return (
@@ -906,10 +916,104 @@ def action_summary_endpoint():
 
 
 # ==========================================
+# HUMAN REVIEW QUEUE
+# ==========================================
+
+@app.get(
+    "/human-reviews"
+)
+def human_reviews_endpoint():
+
+    return (
+        get_pending_reviews()
+    )
+
+
+# ==========================================
+# APPROVE HUMAN REVIEW
+# ==========================================
+
+@app.post(
+    "/human-review/approve"
+)
+def approve_human_review(
+    request: HumanReviewRequest
+):
+
+    result = approve_review(
+
+        payment_id=
+            request.payment_id,
+
+        reviewer_note=
+            request.reviewer_note
+    )
+
+
+    if not result[
+        "success"
+    ]:
+
+        raise HTTPException(
+
+            status_code=400,
+
+            detail=
+                result[
+                    "message"
+                ]
+        )
+
+
+    return result
+
+
+# ==========================================
+# REJECT HUMAN REVIEW
+# ==========================================
+
+@app.post(
+    "/human-review/reject"
+)
+def reject_human_review(
+    request: HumanReviewRequest
+):
+
+    result = reject_review(
+
+        payment_id=
+            request.payment_id,
+
+        reviewer_note=
+            request.reviewer_note
+    )
+
+
+    if not result[
+        "success"
+    ]:
+
+        raise HTTPException(
+
+            status_code=400,
+
+            detail=
+                result[
+                    "message"
+                ]
+        )
+
+
+    return result
+
+
+# ==========================================
 # AUDIT HISTORY
 # ==========================================
 
-@app.get("/audit-history")
+@app.get(
+    "/audit-history"
+)
 def get_audit_history():
 
     if not os.path.exists(
@@ -948,8 +1052,3 @@ def get_audit_history():
     ):
 
         return []
-
-
-# ==========================================
-# ACTION CENTER PERSISTENCE ENABLED
-# ==========================================

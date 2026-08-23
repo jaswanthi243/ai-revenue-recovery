@@ -2,7 +2,9 @@
 # RECOVERAI - ACTION EXECUTOR
 # ==========================================
 
-from services.action_history import save_action
+from services.action_history import (
+    save_action
+)
 
 
 def execute_recovery_action(
@@ -16,17 +18,24 @@ def execute_recovery_action(
     # 1. HUMAN REVIEW REQUIRED
     # ======================================
 
-    if guardrail_decision == "HUMAN_REVIEW":
+    if (
+        guardrail_decision
+        == "HUMAN_REVIEW"
+    ):
 
         return save_action(
 
-            payment_id=payment_id,
+            payment_id=
+                payment_id,
 
-            amount=amount,
+            amount=
+                amount,
 
-            action=final_action,
+            action=
+                final_action,
 
-            execution_status="AWAITING_APPROVAL",
+            execution_status=
+                "AWAITING_APPROVAL",
 
             message=(
                 "Recovery action requires "
@@ -41,17 +50,24 @@ def execute_recovery_action(
     # 2. BLOCKED BY GUARDRAILS
     # ======================================
 
-    if guardrail_decision == "STOP":
+    if (
+        guardrail_decision
+        == "STOP"
+    ):
 
         return save_action(
 
-            payment_id=payment_id,
+            payment_id=
+                payment_id,
 
-            amount=amount,
+            amount=
+                amount,
 
-            action=final_action,
+            action=
+                final_action,
 
-            execution_status="BLOCKED",
+            execution_status=
+                "BLOCKED",
 
             message=(
                 "Recovery action was blocked "
@@ -66,17 +82,24 @@ def execute_recovery_action(
     # 3. RETRY LATER
     # ======================================
 
-    if final_action == "retry_later":
+    if (
+        final_action
+        == "retry_later"
+    ):
 
         return save_action(
 
-            payment_id=payment_id,
+            payment_id=
+                payment_id,
 
-            amount=amount,
+            amount=
+                amount,
 
-            action=final_action,
+            action=
+                final_action,
 
-            execution_status="SCHEDULED",
+            execution_status=
+                "SCHEDULED",
 
             message=(
                 "A future payment retry "
@@ -91,17 +114,24 @@ def execute_recovery_action(
     # 4. RETRY PAYMENT
     # ======================================
 
-    if final_action == "retry_payment":
+    if (
+        final_action
+        == "retry_payment"
+    ):
 
         return save_action(
 
-            payment_id=payment_id,
+            payment_id=
+                payment_id,
 
-            amount=amount,
+            amount=
+                amount,
 
-            action=final_action,
+            action=
+                final_action,
 
-            execution_status="RETRY_SIMULATED",
+            execution_status=
+                "RETRY_SIMULATED",
 
             message=(
                 "Immediate payment retry "
@@ -116,17 +146,24 @@ def execute_recovery_action(
     # 5. UPDATE PAYMENT METHOD
     # ======================================
 
-    if final_action == "update_payment_method":
+    if (
+        final_action
+        == "update_payment_method"
+    ):
 
         return save_action(
 
-            payment_id=payment_id,
+            payment_id=
+                payment_id,
 
-            amount=amount,
+            amount=
+                amount,
 
-            action=final_action,
+            action=
+                final_action,
 
-            execution_status="CUSTOMER_ACTION_REQUIRED",
+            execution_status=
+                "CUSTOMER_ACTION_REQUIRED",
 
             message=(
                 "Customer payment-method "
@@ -141,17 +178,24 @@ def execute_recovery_action(
     # 6. ALTERNATE PAYMENT METHOD
     # ======================================
 
-    if final_action == "alternate_payment_method":
+    if (
+        final_action
+        == "alternate_payment_method"
+    ):
 
         return save_action(
 
-            payment_id=payment_id,
+            payment_id=
+                payment_id,
 
-            amount=amount,
+            amount=
+                amount,
 
-            action=final_action,
+            action=
+                final_action,
 
-            execution_status="CUSTOMER_ACTION_REQUIRED",
+            execution_status=
+                "CUSTOMER_ACTION_REQUIRED",
 
             message=(
                 "Alternate payment-method "
@@ -166,17 +210,24 @@ def execute_recovery_action(
     # 7. HUMAN REVIEW ACTION
     # ======================================
 
-    if final_action == "human_review":
+    if (
+        final_action
+        == "human_review"
+    ):
 
         return save_action(
 
-            payment_id=payment_id,
+            payment_id=
+                payment_id,
 
-            amount=amount,
+            amount=
+                amount,
 
-            action=final_action,
+            action=
+                final_action,
 
-            execution_status="AWAITING_APPROVAL",
+            execution_status=
+                "AWAITING_APPROVAL",
 
             message=(
                 "Case has been sent to "
@@ -191,17 +242,24 @@ def execute_recovery_action(
     # 8. STOP RECOVERY
     # ======================================
 
-    if final_action == "stop_recovery":
+    if (
+        final_action
+        == "stop_recovery"
+    ):
 
         return save_action(
 
-            payment_id=payment_id,
+            payment_id=
+                payment_id,
 
-            amount=amount,
+            amount=
+                amount,
 
-            action=final_action,
+            action=
+                final_action,
 
-            execution_status="BLOCKED",
+            execution_status=
+                "BLOCKED",
 
             message=(
                 "Recovery workflow has been "
@@ -218,13 +276,17 @@ def execute_recovery_action(
 
     return save_action(
 
-        payment_id=payment_id,
+        payment_id=
+            payment_id,
 
-        amount=amount,
+        amount=
+            amount,
 
-        action=final_action,
+        action=
+            final_action,
 
-        execution_status="NO_ACTION",
+        execution_status=
+            "NO_ACTION",
 
         message=(
             "No executable recovery "
@@ -243,23 +305,38 @@ if __name__ == "__main__":
 
     result = execute_recovery_action(
 
-        payment_id="PAY001",
+        payment_id=
+            "PAY007",
 
-        amount=2500,
+        amount=
+            7500,
 
-        final_action="retry_later",
+        final_action=
+            "human_review",
 
-        guardrail_decision="PROCEED"
+        guardrail_decision=
+            "HUMAN_REVIEW"
     )
 
 
     print("\n")
-    print("=" * 70)
-    print("RECOVERAI ACTION EXECUTOR TEST")
-    print("=" * 70)
+
+    print(
+        "=" * 70
+    )
+
+    print(
+        "RECOVERAI HUMAN REVIEW TEST"
+    )
+
+    print(
+        "=" * 70
+    )
 
 
-    for key, value in result.items():
+    for key, value in (
+        result.items()
+    ):
 
         print(
             f"{key}: {value}"
