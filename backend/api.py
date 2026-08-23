@@ -843,3 +843,5 @@ def get_audit_history():
     except pd.errors.EmptyDataError:
 
         return []
+
+    # Trigger Render backend deployment for execute-action
