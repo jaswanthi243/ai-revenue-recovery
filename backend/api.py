@@ -4,15 +4,10 @@ from pydantic import BaseModel
 
 import pandas as pd
 import os
+
 from datetime import datetime
 
 from services.recovery_agent import analyze_payment
-from services.guardrails import apply_guardrails
-from services.risk_engine import (
-    get_priority,
-    get_recovery_probability,
-    calculate_expected_revenue
-)
 
 
 # ==========================================
@@ -23,11 +18,13 @@ BASE_DIR = os.path.dirname(
     os.path.abspath(__file__)
 )
 
+
 PAYMENTS_FILE = os.path.join(
     BASE_DIR,
     "data",
     "payments.csv"
 )
+
 
 AUDIT_FILE = os.path.join(
     BASE_DIR,
@@ -40,9 +37,15 @@ AUDIT_FILE = os.path.join(
 # ==========================================
 
 app = FastAPI(
+
     title="RecoverAI API",
-    description="AI-powered failed payment recovery system",
-    version="1.0.0"
+
+    description=(
+        "AI-powered failed payment "
+        "recovery system"
+    ),
+
+    version="2.0.0"
 )
 
 
@@ -51,10 +54,15 @@ app = FastAPI(
 # ==========================================
 
 app.add_middleware(
+
     CORSMiddleware,
+
     allow_origins=["*"],
+
     allow_credentials=True,
+
     allow_methods=["*"],
+
     allow_headers=["*"],
 )
 
@@ -64,10 +72,16 @@ app.add_middleware(
 # ==========================================
 
 class PaymentRequest(BaseModel):
+
     payment_id: str
+
     amount: float
+
     failure_reason: str
+
     attempt_count: int
+
+    customer_id: str | None = None
 
 
 # ==========================================
@@ -82,6 +96,32 @@ def load_payments():
 
 
 # ==========================================
+# FIND CUSTOMER ID
+# ==========================================
+
+def find_customer_id(
+    payment_id
+):
+
+    payments = load_payments()
+
+    match = payments[
+        payments["payment_id"]
+        == payment_id
+    ]
+
+
+    if match.empty:
+
+        return None
+
+
+    return str(
+        match.iloc[0]["customer_id"]
+    )
+
+
+# ==========================================
 # HOME
 # ==========================================
 
@@ -89,9 +129,18 @@ def load_payments():
 def home():
 
     return {
-        "status": "online",
-        "service": "RecoverAI",
-        "message": "RecoverAI API is running"
+
+        "status":
+            "online",
+
+        "service":
+            "RecoverAI",
+
+        "version":
+            "2.0.0",
+
+        "message":
+            "RecoverAI API is running"
     }
 
 
@@ -103,7 +152,12 @@ def home():
 def health_check():
 
     return {
-        "status": "healthy"
+
+        "status":
+            "healthy",
+
+        "service":
+            "RecoverAI"
     }
 
 
@@ -115,6 +169,8 @@ def health_check():
 def get_payments():
 
     payments = load_payments()
+
+    payments = payments.fillna("")
 
     return payments.to_dict(
         orient="records"
@@ -130,9 +186,14 @@ def get_failed_payments():
 
     payments = load_payments()
 
+
     failed = payments[
         payments["status"] == "failed"
     ]
+
+
+    failed = failed.fillna("")
+
 
     return failed.to_dict(
         orient="records"
@@ -143,23 +204,41 @@ def get_failed_payments():
 # SINGLE PAYMENT
 # ==========================================
 
-@app.get("/payments/{payment_id}")
-def get_payment(payment_id: str):
+@app.get(
+    "/payments/{payment_id}"
+)
+def get_payment(
+    payment_id: str
+):
 
     payments = load_payments()
 
+
     payment = payments[
-        payments["payment_id"] == payment_id
+        payments["payment_id"]
+        == payment_id
     ]
+
 
     if payment.empty:
 
         raise HTTPException(
+
             status_code=404,
+
             detail="Payment not found"
         )
 
-    return payment.iloc[0].to_dict()
+
+    result = (
+        payment
+        .iloc[0]
+        .fillna("")
+        .to_dict()
+    )
+
+
+    return result
 
 
 # ==========================================
@@ -171,73 +250,160 @@ def recovery_summary():
 
     payments = load_payments()
 
+
     failed = payments[
-        payments["status"] == "failed"
+        payments["status"]
+        == "failed"
     ]
+
 
     revenue_at_risk = float(
         failed["amount"].sum()
     )
 
-    expected_revenue = 0
+
+    total_expected_revenue = 0
+
     actual_recovered_revenue = 0
 
+    human_review_count = 0
 
-    for _, payment in failed.iterrows():
+    blocked_count = 0
 
-        amount = payment["amount"]
 
-        attempt_count = (
-            payment["attempt_count"]
+    # ======================================
+    # ANALYZE EVERY FAILED PAYMENT USING
+    # THE NEW RECOVERAI AGENT
+    # ======================================
+
+    for _, payment in (
+        failed.iterrows()
+    ):
+
+        result = analyze_payment(
+
+            payment_id=
+                payment[
+                    "payment_id"
+                ],
+
+            customer_id=
+                payment[
+                    "customer_id"
+                ],
+
+            amount=
+                payment[
+                    "amount"
+                ],
+
+            failure_reason=
+                payment[
+                    "failure_reason"
+                ],
+
+            attempt_count=
+                payment[
+                    "attempt_count"
+                ],
+
+            payment_status=
+                payment[
+                    "status"
+                ]
         )
 
-        failure_reason = (
-            payment["failure_reason"]
+
+        # ==================================
+        # EXPECTED REVENUE
+        # ==================================
+
+        total_expected_revenue += (
+            result[
+                "expected_revenue"
+            ]
         )
 
 
-        probability = get_recovery_probability(
-            failure_reason,
-            attempt_count
-        )
-
-
-        expected_revenue += (
-            calculate_expected_revenue(
-                amount,
-                probability
-            )
-        )
-
-
-        decision, _ = apply_guardrails(
-            amount,
-            attempt_count,
-            probability
-        )
-
+        # ==================================
+        # SIMULATED RECOVERY
+        # ==================================
 
         if (
-            decision == "PROCEED"
-            and probability >= 70
+
+            result[
+                "guardrail_decision"
+            ]
+            == "PROCEED"
+
+            and
+
+            result[
+                "recovery_probability"
+            ]
+            >= 70
+
         ):
 
             actual_recovered_revenue += (
-                amount
+                payment["amount"]
             )
 
+
+        # ==================================
+        # HUMAN REVIEW
+        # ==================================
+
+        if (
+
+            result[
+                "guardrail_decision"
+            ]
+            == "HUMAN_REVIEW"
+
+        ):
+
+            human_review_count += 1
+
+
+        # ==================================
+        # BLOCKED
+        # ==================================
+
+        if (
+
+            result[
+                "guardrail_decision"
+            ]
+            == "STOP"
+
+        ):
+
+            blocked_count += 1
+
+
+    # ======================================
+    # RECOVERY RATE
+    # ======================================
 
     if revenue_at_risk > 0:
 
         recovery_rate = (
+
             actual_recovered_revenue
+
             / revenue_at_risk
+
         ) * 100
 
     else:
 
         recovery_rate = 0
 
+
+    # ======================================
+    # RESPONSE
+    # ======================================
 
     return {
 
@@ -252,7 +418,7 @@ def recovery_summary():
 
         "expected_recoverable_revenue":
             round(
-                expected_revenue,
+                total_expected_revenue,
                 2
             ),
 
@@ -266,12 +432,18 @@ def recovery_summary():
             round(
                 recovery_rate,
                 2
-            )
+            ),
+
+        "human_review_cases":
+            human_review_count,
+
+        "blocked_cases":
+            blocked_count
     }
 
 
 # ==========================================
-# ANALYZE PAYMENT
+# ANALYZE SINGLE PAYMENT
 # ==========================================
 
 @app.post("/analyze-payment")
@@ -279,78 +451,79 @@ def analyze_payment_endpoint(
     payment: PaymentRequest
 ):
 
-    # --------------------------------------
-    # RISK ANALYSIS
-    # --------------------------------------
+    # ======================================
+    # GET CUSTOMER ID
+    # ======================================
 
-    priority = get_priority(
-        payment.amount,
-        payment.attempt_count
+    customer_id = (
+        payment.customer_id
     )
 
 
-    probability = get_recovery_probability(
-        payment.failure_reason,
-        payment.attempt_count
-    )
+    if not customer_id:
 
-
-    expected_revenue = (
-        calculate_expected_revenue(
-            payment.amount,
-            probability
-        )
-    )
-
-
-    # --------------------------------------
-    # RECOVERAI AGENT
-    # --------------------------------------
-
-    agent_result = analyze_payment(
-        payment.payment_id,
-        payment.amount,
-        payment.failure_reason,
-        payment.attempt_count,
-        priority,
-        probability
-    )
-
-
-    # --------------------------------------
-    # GUARDRAILS
-    # --------------------------------------
-
-    decision, guardrail_reason = (
-        apply_guardrails(
-            payment.amount,
-            payment.attempt_count,
-            probability
-        )
-    )
-
-
-    # --------------------------------------
-    # FINAL ACTION
-    # --------------------------------------
-
-    if decision == "PROCEED":
-
-        final_action = (
-            agent_result["recommendation"]
+        customer_id = (
+            find_customer_id(
+                payment.payment_id
+            )
         )
 
-    elif decision == "HUMAN_REVIEW":
 
-        final_action = "human_review"
+    if not customer_id:
 
-    else:
+        raise HTTPException(
 
-        final_action = "stop_recovery"
+            status_code=404,
+
+            detail=(
+                "Customer ID could not "
+                "be found for payment"
+            )
+        )
 
 
     # ======================================
-    # CREATE AUDIT RECORD
+    # RUN COMPLETE RECOVERAI AGENT
+    # ======================================
+
+    result = analyze_payment(
+
+        payment_id=
+            payment.payment_id,
+
+        customer_id=
+            customer_id,
+
+        amount=
+            payment.amount,
+
+        failure_reason=
+            payment.failure_reason,
+
+        attempt_count=
+            payment.attempt_count,
+
+        payment_status=
+            "failed"
+    )
+
+
+    # ======================================
+    # AI CONFIDENCE
+    # ======================================
+
+    ai_confidence = (
+
+        result[
+            "recovery_probability"
+        ]
+
+        / 100
+    )
+
+
+    # ======================================
+    # AUDIT RECORD
     # ======================================
 
     audit_record = {
@@ -361,79 +534,137 @@ def analyze_payment_endpoint(
             ),
 
         "payment_id":
-            payment.payment_id,
+            result[
+                "payment_id"
+            ],
+
+        "customer_id":
+            result[
+                "customer_id"
+            ],
 
         "amount":
-            payment.amount,
+            result[
+                "amount"
+            ],
 
         "failure_reason":
-            payment.failure_reason,
+            result[
+                "failure_reason"
+            ],
 
         "attempt_count":
-            payment.attempt_count,
+            result[
+                "attempt_count"
+            ],
 
         "priority":
-            priority,
+            result[
+                "priority"
+            ],
+
+        "customer_reliability":
+            result[
+                "customer_reliability"
+            ],
 
         "probability":
-            probability,
+            result[
+                "recovery_probability"
+            ],
+
+        "recovery_score":
+            result[
+                "recovery_score"
+            ],
+
+        "risk_level":
+            result[
+                "risk_level"
+            ],
 
         "expected_recovery":
-            round(
-                expected_revenue,
-                2
-            ),
+            result[
+                "expected_revenue"
+            ],
 
         "agent_mode":
-            agent_result["agent_mode"],
+            "RecoverAI Agent",
 
         "ai_recommendation":
-            agent_result["recommendation"],
+            result[
+                "recommendation"
+            ],
 
         "ai_confidence":
-            agent_result["confidence"],
+            ai_confidence,
 
         "ai_reasoning":
-            agent_result["reasoning"],
+            result[
+                "reasoning"
+            ],
 
         "guardrail_decision":
-            decision,
+            result[
+                "guardrail_decision"
+            ],
 
         "guardrail_reason":
-            guardrail_reason,
+            result[
+                "guardrail_reason"
+            ],
 
         "final_action":
-            final_action
+            result[
+                "final_action"
+            ]
     }
 
+
+    # ======================================
+    # SAVE AUDIT RECORD
+    # ======================================
 
     audit_df = pd.DataFrame(
         [audit_record]
     )
 
 
-    # ======================================
-    # WRITE AUDIT RECORD
-    # ======================================
-
     if (
-        not os.path.exists(AUDIT_FILE)
-        or os.path.getsize(AUDIT_FILE) == 0
+
+        not os.path.exists(
+            AUDIT_FILE
+        )
+
+        or
+
+        os.path.getsize(
+            AUDIT_FILE
+        ) == 0
+
     ):
 
         audit_df.to_csv(
+
             AUDIT_FILE,
+
             mode="w",
+
             header=True,
+
             index=False
         )
 
     else:
 
         audit_df.to_csv(
+
             AUDIT_FILE,
+
             mode="a",
+
             header=False,
+
             index=False
         )
 
@@ -444,69 +675,110 @@ def analyze_payment_endpoint(
     )
 
 
-    # --------------------------------------
+    # ======================================
     # API RESPONSE
-    # --------------------------------------
+    # ======================================
 
     return {
 
         "payment_id":
-            payment.payment_id,
+            result[
+                "payment_id"
+            ],
+
+        "customer_id":
+            result[
+                "customer_id"
+            ],
 
         "amount":
-            payment.amount,
+            result[
+                "amount"
+            ],
 
         "failure_reason":
-            payment.failure_reason,
+            result[
+                "failure_reason"
+            ],
 
         "attempt_count":
-            payment.attempt_count,
+            result[
+                "attempt_count"
+            ],
 
 
         "risk_analysis": {
 
             "priority":
-                priority,
+                result[
+                    "priority"
+                ],
+
+            "customer_reliability":
+                result[
+                    "customer_reliability"
+                ],
 
             "recovery_probability":
-                probability,
+                result[
+                    "recovery_probability"
+                ],
+
+            "recovery_score":
+                result[
+                    "recovery_score"
+                ],
+
+            "risk_level":
+                result[
+                    "risk_level"
+                ],
 
             "expected_recovery":
-                round(
-                    expected_revenue,
-                    2
-                )
+                result[
+                    "expected_revenue"
+                ]
         },
 
 
         "recoverai": {
 
             "agent_mode":
-                agent_result["agent_mode"],
+                "RecoverAI Agent",
 
             "recommendation":
-                agent_result["recommendation"],
+                result[
+                    "recommendation"
+                ],
 
             "confidence":
-                agent_result["confidence"],
+                ai_confidence,
 
             "reasoning":
-                agent_result["reasoning"]
+                result[
+                    "reasoning"
+                ]
         },
 
 
         "guardrails": {
 
             "decision":
-                decision,
+                result[
+                    "guardrail_decision"
+                ],
 
             "reason":
-                guardrail_reason
+                result[
+                    "guardrail_reason"
+                ]
         },
 
 
         "final_action":
-            final_action
+            result[
+                "final_action"
+            ]
     }
 
 
@@ -530,7 +802,9 @@ def get_audit_history():
             AUDIT_FILE
         )
 
+
         audit = audit.fillna("")
+
 
         return audit.to_dict(
             orient="records"
